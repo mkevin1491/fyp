@@ -37,7 +37,9 @@ def insert_switchgear_values(dataframe):
                     substation_name=row['Substation Name'],
                     defect_description_1=row['Defect Description 1'],
                     defect_description_2=row['Defect Description 2'],
-                    defect_owner=row['Defect Owner']
+                    defect_owner=row['Defect Owner'],
+                    latitude=row['latitude'],  # Ensure latitude is included
+                    longitude=row['longitude']  # Ensure longitude is included
                 )
                 # Add the Switchgear object to the session
                 db.session.add(switchgear)
@@ -67,6 +69,8 @@ def add_pending_switchgear_record(row):
             defect_description_1=row['Defect Description 1'],
             defect_description_2=row['Defect Description 2'],
             defect_owner=row['Defect Owner'],
+            latitude=row['latitude'],  # Ensure latitude is included
+            longitude=row['longitude']  # Ensure longitude is included
         )
         db.session.add(pending_switchgear)
         db.session.commit()
@@ -90,6 +94,8 @@ def add_switchgear_record(row):
             defect_description_1=row['Defect Description 1'],
             defect_description_2=row['Defect Description 2'],
             defect_owner=row['Defect Owner'],
+            latitude=row['latitude'],  # Ensure latitude is included
+            longitude=row['longitude']  # Ensure longitude is included
         )
         db.session.add(switchgear)
         db.session.commit()
@@ -115,6 +121,8 @@ def move_pending_to_approved(pending_id: int, message: str) -> bool:
                 defect_description_1=pending_record.defect_description_1,
                 defect_description_2=pending_record.defect_description_2,
                 defect_owner=pending_record.defect_owner,
+                latitude=pending_record.latitude,  # Ensure latitude is included
+                longitude=pending_record.longitude  # Ensure longitude is included
             )
             db.session.add(switchgear)
             db.session.delete(pending_record)

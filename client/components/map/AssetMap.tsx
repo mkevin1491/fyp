@@ -1,12 +1,11 @@
 import { useEffect, useRef } from 'react';
-import mapboxgl from 'mapbox-gl';
-
-mapboxgl.accessToken = 'pk.eyJ1IjoibWtldmluMTQ5MSIsImEiOiJjbHdsd2l2MmEwNzAyMmlwczdnbXdpZjdyIn0.zxStZQKdpsmOT7kMG2M_MA';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
 interface Asset {
-  id: number;
+  id: string;
   name: string;
-  criticality: string;
   coordinates: [number, number];
 }
 
@@ -14,44 +13,47 @@ interface AssetMapProps {
   assets: Asset[];
 }
 
-const AssetMap: React.FC<AssetMapProps> = ({ assets }) => {
-  const mapContainerRef = useRef<HTMLDivElement>(null);
+const UpdateMapBounds: React.FC<{ assets: Asset[] }> = ({ assets }) => {
+  const map = useMap();
 
   useEffect(() => {
-    if (mapContainerRef.current) {
-      const map = new mapboxgl.Map({
-        container: mapContainerRef.current,
-        style: 'mapbox://styles/mapbox/streets-v11',
-        center: [0, 20],
-        zoom: 2,
-      });
-
-      const bounds = new mapboxgl.LngLatBounds();
-
-      assets.forEach((asset) => {
-        const popup = new mapboxgl.Popup({ offset: 25 }).setText(
-          `${asset.name}\nCriticality: ${asset.criticality}`
-        );
-
-        const marker = new mapboxgl.Marker()
-          .setLngLat(asset.coordinates)
-          .setPopup(popup)
-          .addTo(map);
-
-        bounds.extend(asset.coordinates);
-      });
-
-      if (assets.length > 0) {
-        map.fitBounds(bounds, {
-          padding: 20,
-        });
-      }
-
-      return () => map.remove();
+    if (assets.length > 0) {
+      const bounds = L.latLngBounds(assets.map(asset => asset.coordinates));
+      map.fitBounds(bounds, { padding: [20, 20] });
     }
-  }, [assets]);
+  }, [assets, map]);
 
-  return <div ref={mapContainerRef} style={{ width: '100%', height: '500px' }} className='story-map'/>;
+  return null;
+};
+
+const AssetMap: React.FC<AssetMapProps> = ({ assets }) => {
+  // Define the custom icon using an image URL
+  const customIcon = L.icon({
+    iconUrl: 'https://cdn4.iconfinder.com/data/icons/small-n-flat/24/map-marker-512.png', // Replace with your image URL
+    iconSize: [25, 41], // size of the icon
+    iconAnchor: [12, 41], // point of the icon which will correspond to marker's location
+    popupAnchor: [1, -34], // point from which the popup should open relative to the iconAnchor
+    shadowSize: [41, 41], // size of the shadow
+  });
+
+  return (
+    <MapContainer center={[0, 20]} zoom={2} style={{ width: '100%', height: '500px' }} className='story-map'>
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      />
+      {assets.map(asset => (
+        <Marker key={asset.id} position={asset.coordinates} icon={customIcon}>
+          <Popup>
+            ID: {asset.id}<br />
+            Name: {asset.name}<br />
+            Coordinates: [{asset.coordinates[0]}, {asset.coordinates[1]}]
+          </Popup>
+        </Marker>
+      ))}
+      <UpdateMapBounds assets={assets} />
+    </MapContainer>
+  );
 };
 
 export default AssetMap;

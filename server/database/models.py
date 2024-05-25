@@ -42,6 +42,8 @@ class Switchgear(db.Model):
     defect_description_1 = db.Column(db.String(500))
     defect_description_2 = db.Column(db.String(500))
     defect_owner = db.Column(db.String(255), index=True)
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
     created_at = db.Column(db.DateTime, default=malaysia_time)
     updated_at = db.Column(db.DateTime, default=malaysia_time, onupdate=malaysia_time)
 
@@ -59,6 +61,8 @@ class PendingSwitchgear(db.Model):
     defect_description_1 = db.Column(db.String(500))
     defect_description_2 = db.Column(db.String(500))
     defect_owner = db.Column(db.String(255), index=True)
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
     created_at = db.Column(db.DateTime, default=malaysia_time)
     updated_at = db.Column(db.DateTime, default=malaysia_time, onupdate=malaysia_time)
 

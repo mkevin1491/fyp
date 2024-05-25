@@ -6,28 +6,9 @@ import { useRouter } from "next/navigation";
 import withAuth from "@/components/withAuth";
 import AssetMap from "@/components/map/AssetMap";
 
-const dummyData = [
-  {
-    id: 1,
-    name: "Asset 1",
-    criticality: "High",
-    coordinates: [12.4924, 41.8902],
-  }, // Coordinates of Rome
-  {
-    id: 2,
-    name: "Asset 2",
-    criticality: "Medium",
-    coordinates: [2.2945, 48.8584],
-  }, // Coordinates of Paris
-  {
-    id: 3,
-    name: "Asset 3",
-    criticality: "Low",
-    coordinates: [-74.006, 40.7128],
-  }, // Coordinates of New York
-];
-const DashboardPage = () => {
+const MapPage = () => {
   const [user, setUser] = useState<{ name: string } | null>(null);
+  const [assets, setAssets] = useState<any[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -52,7 +33,18 @@ const DashboardPage = () => {
         router.push("/login");
       }
     };
+
+    const fetchAssets = async () => {
+      try {
+        const response = await axios.get("http://localhost:8080/api/switchgear-info");
+        setAssets(response.data.data);
+      } catch (error) {
+        console.error("Error fetching assets:", error);
+      }
+    };
+
     fetchUser();
+    fetchAssets();
   }, [router]);
 
   const handleLogout = async () => {
@@ -87,11 +79,10 @@ const DashboardPage = () => {
       <p>Dashboard</p>
       <div>
         <h1>Asset Map</h1>
-
-        <AssetMap assets={dummyData} />
+        <AssetMap assets={assets} />
       </div>
     </div>
   );
 };
 
-export default withAuth(DashboardPage);
+export default withAuth(MapPage);

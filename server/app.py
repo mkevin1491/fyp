@@ -60,7 +60,7 @@ def upload_file():
                 data = preprocess_data(file_path)
                 logger.debug("Data preprocessed successfully")
                 data = data.replace({np.nan: None})
-
+                print("error 1: ", data)
                 for index, row in data.iterrows():
                     logger.debug(f"Processing row {index}: {row.to_dict()}")
                     existing_record = Switchgear.query.filter_by(
@@ -232,6 +232,31 @@ def get_switchgear_data():
     except Exception as e:
         logger.error(f"Error fetching switchgear data: {e}")
         return jsonify({'error': str(e)}), 500
+    
+@app.route("/api/switchgear-info", methods=['GET'])
+def get_switchgear_info():
+    try:
+        switchgear_data = Switchgear.query.with_entities(
+            Switchgear.id,  # Assuming 'id' is part of your model
+            Switchgear.functional_location,
+            Switchgear.substation_name,
+            Switchgear.latitude,
+            Switchgear.longitude
+        ).all()
+
+        response_data = [
+            {
+                'id': record.functional_location,  # Assuming 'id' exists in your model
+                'name': record.substation_name,
+                'coordinates': [record.latitude, record.longitude]
+            } for record in switchgear_data
+        ]
+
+        return jsonify({'data': response_data})
+    except Exception as e:
+        logger.error(f"Error fetching switchgear info: {e}")
+        return jsonify({'error': str(e)}), 500
+
 
 
 if __name__ == "__main__":
