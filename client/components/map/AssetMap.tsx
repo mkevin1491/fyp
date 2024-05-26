@@ -1,7 +1,6 @@
-import { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import React, { useEffect, useRef } from 'react';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
 interface Asset {
   id: string;
@@ -13,47 +12,66 @@ interface AssetMapProps {
   assets: Asset[];
 }
 
-const UpdateMapBounds: React.FC<{ assets: Asset[] }> = ({ assets }) => {
-  const map = useMap();
+const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
 
   useEffect(() => {
-    if (assets.length > 0) {
-      const bounds = L.latLngBounds(assets.map(asset => asset.coordinates));
-      map.fitBounds(bounds, { padding: [20, 20] });
+    if (mapContainerRef.current && !mapRef.current) {
+      mapRef.current = new maplibregl.Map({
+        container: mapContainerRef.current,
+        style: 'https://demotiles.maplibre.org/style.json', // replace with your MapLibre style URL
+        center: [101.9758, 4.2105], // Centered on Malaysia [lng, lat]
+        zoom: 6, // Initial zoom level
+      });
+
+      // Add a GeoJSON source for Malaysia states
+      mapRef.current.on('load', () => {
+        mapRef.current?.addSource('states', {
+          type: 'geojson',
+          data: 'https://raw.githubusercontent.com/deldersveld/topojson/master/countries/malaysia/malaysia-states.json'
+        });
+
+        mapRef.current?.addLayer({
+          id: 'state-boundaries',
+          type: 'line',
+          source: 'states',
+          paint: {
+            'line-color': '#FF0000',
+            'line-width': 2,
+          }
+        });
+      });
     }
-  }, [assets, map]);
 
-  return null;
-};
+    if (mapRef.current && assets.length > 0) {
+      assets.forEach(asset => {
+        const [lat, lng] = asset.coordinates; // Coordinates are in [lat, lng] format
+        if (lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90) {
+          console.log(`Valid coordinates for asset ${asset.id}: [${lng}, ${lat}]`);
+          new maplibregl.Marker()
+            .setLngLat([lng, lat])
+            .setPopup(new maplibregl.Popup().setHTML(`
+              <h3>ID: ${asset.id}</h3>
+              <p>Name: ${asset.name}</p>
+              <p>Coordinates: [${lng}, ${lat}]</p>
+            `))
+            .addTo(mapRef.current as maplibregl.Map);
+        } else {
+          console.error(`Invalid coordinates for asset ${asset.id}: [${lat}, ${lng}]`);
+        }
+      });
+    }
 
-const AssetMap: React.FC<AssetMapProps> = ({ assets }) => {
-  // Define the custom icon using an image URL
-  const customIcon = L.icon({
-    iconUrl: 'https://cdn4.iconfinder.com/data/icons/small-n-flat/24/map-marker-512.png', // Replace with your image URL
-    iconSize: [25, 41], // size of the icon
-    iconAnchor: [12, 41], // point of the icon which will correspond to marker's location
-    popupAnchor: [1, -34], // point from which the popup should open relative to the iconAnchor
-    shadowSize: [41, 41], // size of the shadow
-  });
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null; // Clean up map reference
+      }
+    };
+  }, [assets]);
 
-  return (
-    <MapContainer center={[0, 20]} zoom={2} style={{ width: '100%', height: '500px' }} className='story-map'>
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      />
-      {assets.map(asset => (
-        <Marker key={asset.id} position={asset.coordinates} icon={customIcon}>
-          <Popup>
-            ID: {asset.id}<br />
-            Name: {asset.name}<br />
-            Coordinates: [{asset.coordinates[0]}, {asset.coordinates[1]}]
-          </Popup>
-        </Marker>
-      ))}
-      <UpdateMapBounds assets={assets} />
-    </MapContainer>
-  );
+  return <div ref={mapContainerRef} style={{ width: '100%', height: '500px' }} />;
 };
 
 export default AssetMap;

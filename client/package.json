@@ -21,6 +21,7 @@
     "leaflet": "^1.9.4",
     "lucide-react": "^0.378.0",
     "mapbox-gl": "^3.4.0",
+    "maplibre-gl": "^4.3.2",
     "next": "14.2.3",
     "next-auth": "^4.24.7",
     "preline": "^2.1.0",

@@ -250,14 +250,13 @@ def get_switchgear_info():
                 'name': record.substation_name,
                 'coordinates': [record.latitude, record.longitude]
             } for record in switchgear_data
+            if -90 <= record.latitude <= 90 and -180 <= record.longitude <= 180
         ]
 
         return jsonify({'data': response_data})
     except Exception as e:
         logger.error(f"Error fetching switchgear info: {e}")
         return jsonify({'error': str(e)}), 500
-
-
 
 if __name__ == "__main__":
     socketio.run(app, debug=True, port=8080)
