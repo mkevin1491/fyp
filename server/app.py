@@ -200,14 +200,21 @@ def reject_pending_record(id):
 @app.route("/api/approval-logs", methods=['GET'])
 @jwt_required()
 def get_approval_logs():
-    logs = ApprovalLog.query.all()
+    filter_action = request.args.get('filter', 'all')
+    
+    if filter_action == 'all':
+        logs = ApprovalLog.query.all()
+    else:
+        logs = ApprovalLog.query.filter_by(action=filter_action).all()
+    
     approval_logs = []
     for log in logs:
         approval_logs.append({
             'functional_location': log.functional_location,
             'action': log.action,
             'message': log.message,
-            'user': log.user.name  # Get the user's name from the relationship
+            'approver': log.user.name,  # Get the user's name from the relationship
+            'timestamp': log.timestamp.isoformat()  # Return timestamp as ISO format string
         })
     return jsonify(approval_logs)
 

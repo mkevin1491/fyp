@@ -1,8 +1,9 @@
 from flask import Blueprint, request, jsonify, make_response
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.models import User
 from database import db
 import logging
+from auth.utils import create_token  # Import the create_token function
 
 auth_bp = Blueprint('auth', __name__)
 logger = logging.getLogger(__name__)
@@ -56,7 +57,7 @@ def login():
         return response, 401
 
     logger.debug("Password verified, generating token")
-    access_token = create_access_token(identity={"id": user.id, "name": user.name, "email": user.email})
+    access_token = create_token(identity={"id": user.id, "name": user.name, "email": user.email})
     response = jsonify(access_token=access_token)
     return response, 200
 
