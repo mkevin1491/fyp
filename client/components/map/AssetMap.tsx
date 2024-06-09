@@ -68,6 +68,10 @@ const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
     }
 
     if (mapRef.current && assets.length > 0) {
+      // Clear existing markers
+      const markers = document.querySelectorAll('.mapboxgl-marker');
+      markers.forEach(marker => marker.remove());
+
       // Add markers for each asset
       assets.forEach(asset => {
         const [lat, lng] = asset.coordinates; // Coordinates are in [lat, lng] format

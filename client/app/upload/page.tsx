@@ -11,7 +11,7 @@ const UploadPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [arrayBuffer, setArrayBuffer] = useState<ArrayBuffer | null>(null);
-  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const router = useRouter();
 
   const parseExcelData = (arrayBuffer: ArrayBuffer) => {
@@ -76,9 +76,20 @@ const UploadPage = () => {
           }
         }
       );
-      setMessage(response.data.message);
-      setError(null);
-      setNotification({ message: "Upload successful! Please go to the approval page.", type: 'success' });
+
+      const { message, pendingAllExist, switchgearAllExist } = response.data;
+
+      if (pendingAllExist && switchgearAllExist) {
+        setNotification({ message: "All switchgear records already exist in both pending approvals and switchgear tables.", type: 'info' });
+      } else if (pendingAllExist) {
+        setNotification({ message: "All switchgear records already exist in the pending approvals table.", type: 'info' });
+      } else if (switchgearAllExist) {
+        setNotification({ message: "All switchgear records already exist in the switchgear table.", type: 'info' });
+      } else {
+        setMessage(message);
+        setError(null);
+        setNotification({ message: "Upload successful! Please go to the approval page.", type: 'success' });
+      }
       setTimeout(() => setNotification(null), 3000); // Hide notification after 3 seconds
     } catch (error) {
       console.error(error);
@@ -139,7 +150,7 @@ const UploadPage = () => {
   return (
     <div className="p-4">
       {notification && (
-        <div className={`fixed top-0 right-0 mt-4 mr-4 px-4 py-2 rounded shadow-lg ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
+        <div className={`fixed top-0 right-0 mt-4 mr-4 px-4 py-2 rounded shadow-lg ${notification.type === 'success' ? 'bg-green-500' : notification.type === 'info' ? 'bg-blue-500' : 'bg-red-500'} text-white`}>
           <p>{notification.message}</p>
         </div>
       )}

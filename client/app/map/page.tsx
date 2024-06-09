@@ -9,6 +9,8 @@ import AssetMap from "@/components/map/AssetMap";
 const MapPage = () => {
   const [user, setUser] = useState<{ name: string } | null>(null);
   const [assets, setAssets] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredAssets, setFilteredAssets] = useState<any[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -38,6 +40,7 @@ const MapPage = () => {
       try {
         const response = await axios.get("http://localhost:8080/api/switchgear-info");
         setAssets(response.data.data);
+        setFilteredAssets(response.data.data);
       } catch (error) {
         console.error("Error fetching assets:", error);
       }
@@ -68,6 +71,16 @@ const MapPage = () => {
     }
   };
 
+  const handleSearch = (event) => {
+    const query = event.target.value.toLowerCase();
+    setSearchQuery(query);
+    const filtered = assets.filter((asset) => 
+      asset.name.toLowerCase().includes(query) || 
+      asset.id.toLowerCase().includes(query)
+    );
+    setFilteredAssets(filtered);
+  };
+
   if (!user) {
     return <div>Loading...</div>;
   }
@@ -79,7 +92,13 @@ const MapPage = () => {
       <p>Dashboard</p>
       <div>
         <h1>Asset Map</h1>
-        <AssetMap assets={assets} />
+        <input 
+          type="text" 
+          value={searchQuery} 
+          onChange={handleSearch} 
+          placeholder="Search by functional location or substation name"
+        />
+        <AssetMap assets={filteredAssets} />
       </div>
     </div>
   );

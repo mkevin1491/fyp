@@ -60,7 +60,48 @@ def upload_file():
                 data = preprocess_data(file_path)
                 logger.debug("Data preprocessed successfully")
                 data = data.replace({np.nan: None})
-                print("error 1: ", data)
+
+                # Check if all records already exist in PendingSwitchgear
+                pending_all_exist = True
+                switchgear_all_exist = True
+
+                for index, row in data.iterrows():
+                    existing_pending_record = PendingSwitchgear.query.filter_by(
+                        functional_location=row['Functional Location']
+                    ).first()
+                    existing_switchgear_record = Switchgear.query.filter_by(
+                        functional_location=row['Functional Location']
+                    ).first()
+                    if not existing_pending_record:
+                        pending_all_exist = False
+                    if not existing_switchgear_record:
+                        switchgear_all_exist = False
+
+                if pending_all_exist and switchgear_all_exist:
+                    logger.debug("All records already exist in both PendingSwitchgear and Switchgear")
+                    return jsonify({
+                        'message': 'All records already exist in both pending approvals and switchgear tables.',
+                        'pendingAllExist': True,
+                        'switchgearAllExist': True
+                    }), 200
+
+                if pending_all_exist:
+                    logger.debug("All records already exist in PendingSwitchgear")
+                    return jsonify({
+                        'message': 'All records already exist in pending approvals.',
+                        'pendingAllExist': True,
+                        'switchgearAllExist': False
+                    }), 200
+
+                if switchgear_all_exist:
+                    logger.debug("All records already exist in Switchgear")
+                    return jsonify({
+                        'message': 'All records already exist in switchgear table.',
+                        'pendingAllExist': False,
+                        'switchgearAllExist': True
+                    }), 200
+
+                # Proceed with existing logic if not all records exist
                 for index, row in data.iterrows():
                     logger.debug(f"Processing row {index}: {row.to_dict()}")
                     existing_record = Switchgear.query.filter_by(
