@@ -60,48 +60,29 @@ def upload_file():
                 data = preprocess_data(file_path)
                 logger.debug("Data preprocessed successfully")
                 data = data.replace({np.nan: None})
-
-                # Check if all records already exist in PendingSwitchgear
-                pending_all_exist = True
-                switchgear_all_exist = True
-
+                
+                # Preliminary check to ensure the entire data exists in either the PendingSwitchgear or Switchgear table
+                all_exists = True
                 for index, row in data.iterrows():
-                    existing_pending_record = PendingSwitchgear.query.filter_by(
+                    pending_record = PendingSwitchgear.query.filter_by(
                         functional_location=row['Functional Location']
                     ).first()
-                    existing_switchgear_record = Switchgear.query.filter_by(
+                    switchgear_record = Switchgear.query.filter_by(
                         functional_location=row['Functional Location']
                     ).first()
-                    if not existing_pending_record:
-                        pending_all_exist = False
-                    if not existing_switchgear_record:
-                        switchgear_all_exist = False
+                    
+                    if not pending_record and not switchgear_record:
+                        all_exists = False
+                        break
 
-                if pending_all_exist and switchgear_all_exist:
-                    logger.debug("All records already exist in both PendingSwitchgear and Switchgear")
-                    return jsonify({
-                        'message': 'All records already exist in both pending approvals and switchgear tables.',
-                        'pendingAllExist': True,
-                        'switchgearAllExist': True
-                    }), 200
+                if all_exists:
+                    logger.debug("All records already exist in either PendingSwitchgear or Switchgear tables")
+                    return jsonify({'message': 'All records already exist in either PendingSwitchgear or Switchgear tables.'})
 
-                if pending_all_exist:
-                    logger.debug("All records already exist in PendingSwitchgear")
-                    return jsonify({
-                        'message': 'All records already exist in pending approvals.',
-                        'pendingAllExist': True,
-                        'switchgearAllExist': False
-                    }), 200
+                # Variable to track if any new record is added to PendingSwitchgear
+                new_pending_added = False
 
-                if switchgear_all_exist:
-                    logger.debug("All records already exist in Switchgear")
-                    return jsonify({
-                        'message': 'All records already exist in switchgear table.',
-                        'pendingAllExist': False,
-                        'switchgearAllExist': True
-                    }), 200
-
-                # Proceed with existing logic if not all records exist
+                # Continue with existing logic
                 for index, row in data.iterrows():
                     logger.debug(f"Processing row {index}: {row.to_dict()}")
                     existing_record = Switchgear.query.filter_by(
@@ -113,11 +94,18 @@ def upload_file():
                         if (existing_record.tev_us_in_db != row['TEV/US In DB']) or (existing_record.hotspot_delta_t_in_c != row['Hotspot ∆T In ⁰C']):
                             add_switchgear_record(row.to_dict())
                             logger.debug(f"Added new record for updated values for {row['Functional Location']}")
+                        elif existing_record.report_date != row['Report Date ']:
+                            add_switchgear_record(row.to_dict())
+                            logger.debug(f"Added new record for different report date for {row['Functional Location']}")
                         else:
                             logger.debug(f"No update needed for {row['Functional Location']}")
                     else:
                         add_pending_switchgear_record(row.to_dict())
                         logger.debug(f"Pending approval for new record {row['Functional Location']}")
+                        new_pending_added = True
+
+                if not new_pending_added:
+                    return jsonify({'message': 'No new records were added to pending switchgear. All records are already in the approval page.'})
 
                 # Emit the updated count to all connected clients
                 count = db.session.query(PendingSwitchgear).count()
@@ -137,6 +125,7 @@ def upload_file():
     except Exception as e:
         logger.error(f"Error during file upload: {e}")
         return jsonify({'error': str(e)}), 500
+
 
 @app.route("/api/pending-approvals", methods=['GET'])
 def get_pending_approvals():

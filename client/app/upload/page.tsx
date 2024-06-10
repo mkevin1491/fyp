@@ -77,14 +77,14 @@ const UploadPage = () => {
         }
       );
 
-      const { message, pendingAllExist, switchgearAllExist } = response.data;
+      console.log(response.data); // Log the response data to the console
 
-      if (pendingAllExist && switchgearAllExist) {
-        setNotification({ message: "All switchgear records already exist in both pending approvals and switchgear tables.", type: 'info' });
-      } else if (pendingAllExist) {
-        setNotification({ message: "All switchgear records already exist in the pending approvals table.", type: 'info' });
-      } else if (switchgearAllExist) {
-        setNotification({ message: "All switchgear records already exist in the switchgear table.", type: 'info' });
+      const { message } = response.data;
+
+      if (message === "All records already exist in either PendingSwitchgear or Switchgear tables.") {
+        setNotification({ message: "All data is already in the approval page or switchgear table.", type: 'info' });
+      } else if (message === "No new records were added to pending switchgear. All records are already in the approval page.") {
+        setNotification({ message: "No new records added. Data is already in the approval page.", type: 'info' });
       } else {
         setMessage(message);
         setError(null);
@@ -104,8 +104,9 @@ const UploadPage = () => {
     const file = event.target.files?.[0];
     setMessage(null); // Clear previous message
     setError(null); // Clear previous error
-    setSelectedFile(file);
+
     if (file) {
+      setSelectedFile(file);
       const reader = new FileReader();
       reader.onload = (e) => {
         const buffer = e.target?.result as ArrayBuffer;
