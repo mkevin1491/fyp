@@ -1,204 +1,273 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import withAuth from '@/components/withAuth';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from "react";
+import axios from "axios";
+import withAuth from "@/components/withAuth";
+import { useRouter } from "next/navigation";
+import {
+  Card,
+  CardHeader,
+  CardBody,
+  Typography,
+  Button,
+  Input,
+  Dialog,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+} from "@material-tailwind/react";
+import Pagination from "@/components/pagination"; // Adjust the path according to your project structure
 
 const PendingApprovals = () => {
-    const [pendingApprovals, setPendingApprovals] = useState([]);
-    const [showModal, setShowModal] = useState(false);
-    const [currentAction, setCurrentAction] = useState('');
-    const [currentId, setCurrentId] = useState(null);
-    const [reason, setReason] = useState('');
-    const router = useRouter();
+  const [pendingApprovals, setPendingApprovals] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [currentAction, setCurrentAction] = useState("");
+  const [currentId, setCurrentId] = useState(null);
+  const [reason, setReason] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const router = useRouter();
 
-    useEffect(() => {
-        fetchPendingApprovals();
-    }, []);
+  useEffect(() => {
+    fetchPendingApprovals();
+  }, [currentPage]);
 
-    const fetchPendingApprovals = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                router.push('/login');
-                return;
-            }
-            const response = await axios.get('http://127.0.0.1:8080/api/pending-approvals', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            setPendingApprovals(response.data.pending_approvals);
-        } catch (error) {
-            console.error('Error fetching pending approvals:', error);
+  const fetchPendingApprovals = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+      const response = await axios.get(
+        `http://127.0.0.1:8080/api/pending-approvals?page=${currentPage}&per_page=10`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-    };
+      );
+      setPendingApprovals(response.data.pending_approvals);
+      setTotalPages(response.data.total_pages);
+    } catch (error) {
+      console.error("Error fetching pending approvals:", error);
+    }
+  };
 
-    const handleApprove = async (id: number, reason: string) => {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                router.push('/login');
-                return;
-            }
-            await axios.post(`http://127.0.0.1:8080/api/approve/${id}`, { message: reason }, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            fetchPendingApprovals();
-            closeModal();
-        } catch (error) {
-            console.error('Error approving record:', error);
+  const handleApprove = async (id, reason) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+      await axios.post(
+        `http://127.0.0.1:8080/api/approve/${id}`,
+        { message: reason },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-    };
+      );
+      fetchPendingApprovals();
+      closeModal();
+    } catch (error) {
+      console.error("Error approving record:", error);
+    }
+  };
 
-    const handleReject = async (id: number, reason: string) => {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                router.push('/login');
-                return;
-            }
-            await axios.post(`http://127.0.0.1:8080/api/reject/${id}`, { message: reason }, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            fetchPendingApprovals();
-            closeModal();
-        } catch (error) {
-            console.error('Error rejecting record:', error);
+  const handleReject = async (id, reason) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+      await axios.post(
+        `http://127.0.0.1:8080/api/reject/${id}`,
+        { message: reason },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-    };
+      );
+      fetchPendingApprovals();
+      closeModal();
+    } catch (error) {
+      console.error("Error rejecting record:", error);
+    }
+  };
 
-    const openModal = (action: string, id: number) => {
-        setCurrentAction(action);
-        setCurrentId(id);
-        setShowModal(true);
-    };
+  const openModal = (action, id) => {
+    setCurrentAction(action);
+    setCurrentId(id);
+    setShowModal(true);
+  };
 
-    const closeModal = () => {
-        setShowModal(false);
-        setReason('');
-    };
+  const closeModal = () => {
+    setShowModal(false);
+    setReason("");
+  };
 
-    const handleAction = () => {
-        if (currentAction === 'approve') {
-            handleApprove(currentId, reason);
-        } else if (currentAction === 'reject') {
-            handleReject(currentId, reason);
-        }
-    };
+  const handleAction = () => {
+    if (currentAction === "approve") {
+      handleApprove(currentId, reason);
+    } else if (currentAction === "reject") {
+      handleReject(currentId, reason);
+    }
+  };
 
-    return (
-        <div>
-            <h1>Pending Approvals</h1>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Functional Location</th>
-                        <th>Report Date</th>
-                        <th>Defect From</th>
-                        <th>TEV/US In DB</th>
-                        <th>Hotspot ∆T In ⁰C</th>
-                        <th>Switchgear Type</th>
-                        <th>Switchgear Brand</th>
-                        <th>Substation Name</th>
-                        <th>Defect Description 1</th>
-                        <th>Defect Description 2</th>
-                        <th>Defect Owner</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {pendingApprovals.map((approval) => (
-                        <tr key={approval.id}>
-                            <td>{approval.functional_location}</td>
-                            <td>{approval.report_date}</td>
-                            <td>{approval.defect_from}</td>
-                            <td>{approval.tev_us_in_db}</td>
-                            <td>{approval.hotspot_delta_t_in_c}</td>
-                            <td>{approval.switchgear_type}</td>
-                            <td>{approval.switchgear_brand}</td>
-                            <td>{approval.substation_name}</td>
-                            <td>{approval.defect_description_1}</td>
-                            <td>{approval.defect_description_2}</td>
-                            <td>{approval.defect_owner}</td>
-                            <td>
-                                <button onClick={() => openModal('approve', approval.id)}>Approve</button>
-                                <button onClick={() => openModal('reject', approval.id)}>Reject</button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  return (
+    <div className="mt-12 mb-8 flex flex-col gap-12">
+      <Card>
+        <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
+          <Typography variant="h6" color="white">
+            Pending Approvals
+          </Typography>
+        </CardHeader>
+        <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
+          {pendingApprovals.length > 0 ? (
+            <table className="w-full min-w-[640px] table-auto mt-4">
+              <thead>
+                <tr>
+                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
+                    Functional Location
+                  </th>
+                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
+                    Report Date
+                  </th>
+                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
+                    Defect From
+                  </th>
+                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
+                    TEV/US In DB
+                  </th>
+                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
+                    Hotspot ∆T In ⁰C
+                  </th>
+                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
+                    Switchgear Type
+                  </th>
+                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
+                    Switchgear Brand
+                  </th>
+                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
+                    Substation Name
+                  </th>
+                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
+                    Defect Description 1
+                  </th>
+                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
+                    Defect Description 2
+                  </th>
+                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
+                    Defect Owner
+                  </th>
+                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingApprovals.map((approval) => (
+                  <tr
+                    key={approval.id}
+                    className="border-b border-blue-gray-50"
+                  >
+                    <td className="py-3 px-5">
+                      {approval.functional_location}
+                    </td>
+                    <td className="py-3 px-5">{approval.report_date}</td>
+                    <td className="py-3 px-5">{approval.defect_from}</td>
+                    <td className="py-3 px-5">{approval.tev_us_in_db}</td>
+                    <td className="py-3 px-5">
+                      {approval.hotspot_delta_t_in_c}
+                    </td>
+                    <td className="py-3 px-5">{approval.switchgear_type}</td>
+                    <td className="py-3 px-5">{approval.switchgear_brand}</td>
+                    <td className="py-3 px-5">{approval.substation_name}</td>
+                    <td className="py-3 px-5">
+                      {approval.defect_description_1}
+                    </td>
+                    <td className="py-3 px-5">
+                      {approval.defect_description_2}
+                    </td>
+                    <td className="py-3 px-5">{approval.defect_owner}</td>
+                    <td className="py-3 px-5">
+                      <div className="flex">
+                        {" "}
+                        {/* Wrap buttons in a flexbox container */}
+                        <Button
+                          onClick={() => openModal("approve", approval.id)}
+                          variant="gradient"
+                          color="green"
+                          size="sm"
+                          className="mr-2"
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          onClick={() => openModal("reject", approval.id)}
+                          variant="gradient"
+                          color="red"
+                          size="sm"
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
+          ) : (
+            <Typography className="py-4 px-5 text-gray-500">
+              No records found.
+            </Typography>
+          )}
+          <div className="flex justify-center mt-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          </div>
 
-            {showModal && (
-                <div className="modal">
-                    <div className="modal-content">
-                        <h2>{`You are about to ${currentAction}. Are you sure?`}</h2>
-                        <label>
-                            Reason:
-                            <input
-                                type="text"
-                                value={reason}
-                                onChange={(e) => setReason(e.target.value)}
-                                placeholder="Enter reason"
-                            />
-                        </label>
-                        <div className="modal-actions">
-                            <button onClick={handleAction}>{currentAction.charAt(0).toUpperCase() + currentAction.slice(1)}</button>
-                            <button onClick={closeModal}>Cancel</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            <style jsx>{`
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                }
-                th, td {
-                    border: 1px solid #ddd;
-                    padding: 8px;
-                }
-                th {
-                    background-color: #f2f2f2;
-                }
-                .modal {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0, 0, 0, 0.5);
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                }
-                .modal-content {
-                    background: white;
-                    padding: 20px;
-                    border-radius: 5px;
-                    text-align: center;
-                }
-                .modal-actions {
-                    margin-top: 20px;
-                    display: flex;
-                    justify-content: space-around;
-                }
-                .modal-actions button {
-                    padding: 10px 20px;
-                    border: none;
-                    border-radius: 5px;
-                    cursor: pointer;
-                }
-            `}</style>
-        </div>
-    );
+          <Dialog open={showModal} handler={closeModal}>
+            <DialogHeader>{`You are about to ${currentAction}. Are you sure?`}</DialogHeader>
+            <DialogBody>
+              <Input
+                type="text"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                label="Reason"
+                placeholder="Enter reason"
+              />
+            </DialogBody>
+            <DialogFooter>
+              <Button
+                onClick={handleAction}
+                variant="gradient"
+                color={currentAction === "approve" ? "green" : "red"}
+                className="mr-2"
+              >
+                {currentAction.charAt(0).toUpperCase() + currentAction.slice(1)}
+              </Button>
+              <Button onClick={closeModal} variant="outlined" className="ml-2">
+                Cancel
+              </Button>
+            </DialogFooter>
+          </Dialog>
+        </CardBody>
+      </Card>
+    </div>
+  );
 };
 
 export default withAuth(PendingApprovals);

@@ -129,10 +129,12 @@ def upload_file():
 
 @app.route("/api/pending-approvals", methods=['GET'])
 def get_pending_approvals():
-    logger.debug("Received request to /api/pending-approvals")
     try:
-        pending_approvals = PendingSwitchgear.query.all()
-        logger.debug(f"Pending approvals fetched: {pending_approvals}")
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        
+        pending_approvals = PendingSwitchgear.query.paginate(page=page, per_page=per_page, error_out=False)
+
         approvals = [
             {
                 'id': approval.id,
@@ -147,13 +149,19 @@ def get_pending_approvals():
                 'defect_description_1': approval.defect_description_1,
                 'defect_description_2': approval.defect_description_2,
                 'defect_owner': approval.defect_owner,
-            } for approval in pending_approvals
+            } for approval in pending_approvals.items
         ]
-        logger.debug(f"Pending approvals processed: {approvals}")
-        return jsonify({'pending_approvals': approvals})
+        
+        return jsonify({
+            'pending_approvals': approvals,
+            'total_pages': pending_approvals.pages,
+            'current_page': pending_approvals.page,
+            'total_items': pending_approvals.total
+        })
     except Exception as e:
         logger.error(f"Error fetching pending approvals: {e}")
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/pending-approvals/count', methods=['GET'])
 def get_pending_approvals_count():
@@ -230,23 +238,37 @@ def reject_pending_record(id):
 @app.route("/api/approval-logs", methods=['GET'])
 @jwt_required()
 def get_approval_logs():
-    filter_action = request.args.get('filter', 'all')
-    
-    if filter_action == 'all':
-        logs = ApprovalLog.query.all()
-    else:
-        logs = ApprovalLog.query.filter_by(action=filter_action).all()
-    
-    approval_logs = []
-    for log in logs:
-        approval_logs.append({
-            'functional_location': log.functional_location,
-            'action': log.action,
-            'message': log.message,
-            'approver': log.user.name,  # Get the user's name from the relationship
-            'timestamp': log.timestamp.isoformat()  # Return timestamp as ISO format string
+    try:
+        filter_action = request.args.get('filter', 'all')
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+
+        query = ApprovalLog.query
+
+        if filter_action != 'all':
+            query = query.filter_by(action=filter_action)
+
+        logs = query.paginate(page=page, per_page=per_page, error_out=False)
+
+        approval_logs = []
+        for log in logs.items:
+            approval_logs.append({
+                'functional_location': log.functional_location,
+                'action': log.action,
+                'message': log.message,
+                'approver': log.user.name,  # Get the user's name from the relationship
+                'timestamp': log.timestamp.isoformat()  # Return timestamp as ISO format string
+            })
+
+        return jsonify({
+            'approval_logs': approval_logs,
+            'total_pages': logs.pages,
+            'current_page': logs.page,
+            'total_items': logs.total
         })
-    return jsonify(approval_logs)
+    except Exception as e:
+        logger.error(f"Error fetching approval logs: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route("/api/switchgear-data", methods=['GET'])
 def get_switchgear_data():

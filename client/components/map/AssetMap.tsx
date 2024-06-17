@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -15,6 +15,8 @@ interface AssetMapProps {
 const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  const [filteredAssets, setFilteredAssets] = useState<Asset[]>(assets);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (mapContainerRef.current && !mapRef.current) {
@@ -67,13 +69,13 @@ const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
       });
     }
 
-    if (mapRef.current && assets.length > 0) {
+    if (mapRef.current && filteredAssets.length > 0) {
       // Clear existing markers
       const markers = document.querySelectorAll('.mapboxgl-marker');
       markers.forEach(marker => marker.remove());
 
       // Add markers for each asset
-      assets.forEach(asset => {
+      filteredAssets.forEach(asset => {
         const [lat, lng] = asset.coordinates; // Coordinates are in [lat, lng] format
         if (lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90) {
           new maplibregl.Marker({ color: 'red' })
@@ -97,9 +99,35 @@ const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
         mapRef.current = null; // Clean up map reference
       }
     };
-  }, [assets]);
+  }, [filteredAssets]);
 
-  return <div ref={mapContainerRef} style={{ width: '100%', height: '500px' }} />;
+  const handleSearch = (event) => {
+    const query = event.target.value.toLowerCase();
+    setSearchQuery(query);
+    const filtered = assets.filter(
+      (asset) =>
+        asset.name.toLowerCase().includes(query) ||
+        asset.id.toLowerCase().includes(query)
+    );
+    setFilteredAssets(filtered);
+  };
+
+  return (
+    <div className="relative">
+      <div ref={mapContainerRef} style={{ width: '100%', height: '500px' }} />
+      <div className="absolute top-4 left-4 z-10 w-full max-w-md">
+        <div className="p-2 bg-white rounded-md shadow-md">
+          <input
+            type="text"
+            placeholder="Find the functional location"
+            value={searchQuery}
+            onChange={handleSearch}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md"
+          />
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default AssetMap;
