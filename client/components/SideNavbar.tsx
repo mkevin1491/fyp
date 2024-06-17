@@ -11,20 +11,24 @@ import {
   FileCog,
   FileClock,
   ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useWindowWidth } from "@react-hook/window-size";
 import { io } from "socket.io-client";
+import {
+  useMaterialTailwindController,
+  setOpenSidenav,
+} from "./context";
 
 export default function SideNavbar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [pendingApprovalCount, setPendingApprovalCount] = useState<number>(0);
-  const onlyWidth = useWindowWidth();
+  const [controller, dispatch] = useMaterialTailwindController();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const socket = io("http://127.0.0.1:8080"); // Adjust the URL if necessary
+    const socket = io("http://127.0.0.1:8080");
 
     socket.on("connect", () => {
       console.log("Connected to WebSocket server");
@@ -35,10 +39,8 @@ export default function SideNavbar() {
       setPendingApprovalCount(data.count);
     });
 
-    // Fetch initial count
     fetchPendingApprovalCount();
 
-    // Clean up the socket connection when the component unmounts
     return () => {
       socket.disconnect();
     };
@@ -46,75 +48,89 @@ export default function SideNavbar() {
 
   const fetchPendingApprovalCount = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8080/api/pending-approvals/count');
+      const response = await fetch("http://127.0.0.1:8080/api/pending-approvals/count");
       const data = await response.json();
       setPendingApprovalCount(data.count);
     } catch (error) {
-      console.error('Error fetching pending approvals count:', error);
+      console.error("Error fetching pending approvals count:", error);
     }
   };
-
-  const mobileWidth = onlyWidth < 768;
 
   function toggleSidebar() {
     setIsCollapsed(!isCollapsed);
   }
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setOpenSidenav(dispatch, false);
+      } else {
+        setOpenSidenav(dispatch, true);
+      }
+    };
+
+    handleResize(); // Call the function initially to set the correct state
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [dispatch]);
+
   if (!mounted) {
-    return null; // or return a loading spinner or skeleton component
+    return null;
   }
 
   return (
-    <div className="relative min-w-[80px] border-r px-3 pb-10 pt-24">
-      {!mobileWidth && (
-        <div className="absolute right-[-20px] top-7">
-          <Button
-            onClick={toggleSidebar}
-            variant="secondary"
-            className="rounded-full p-2"
-            aria-label="Toggle Sidebar"
-          >
-            <ChevronRight />
+    <aside
+      className={`${
+        controller.openSidenav ? "translate-x-0" : "-translate-x-full"
+      } fixed inset-y-0 left-0 z-50 my-4 ml-4 h-[calc(100vh-32px)] w-72 bg-white shadow-md rounded-xl transition-transform duration-300 md:translate-x-0`}
+    >
+      <div className="relative flex flex-col h-full">
+        <div className="flex justify-between items-center py-6 px-8">
+          <span className="text-xl font-bold">Material Tailwind</span>
+          <Button onClick={toggleSidebar} variant="secondary" className="rounded-full p-2" aria-label="Toggle Sidebar">
+            {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
           </Button>
         </div>
-      )}
-
-      <Nav
-        isCollapsed={mobileWidth || isCollapsed}
-        links={[
-          {
-            title: "Dashboard",
-            href: "/dashboard",
-            icon: LayoutDashboard,
-            variant: "default",
-          },
-          {
-            title: "Geographical Map",
-            href: "/map",
-            icon: MapPinned,
-            variant: "ghost",
-          },
-          {
-            title: "Upload CSV",
-            href: "/upload",
-            icon: Upload,
-            variant: "ghost",
-          },
-          {
-            title: "Approval",
-            href: "/approval",
-            icon: FileCog,
-            variant: "ghost",
-            label: pendingApprovalCount > 0 ? pendingApprovalCount.toString() : undefined,
-          },
-          {
-            title: "Approval Log",
-            href: "/approval_log",
-            icon: FileClock,
-            variant: "ghost",
-          },
-        ]}
-      />
-    </div>
+        <Nav
+          isCollapsed={isCollapsed}
+          links={[
+            {
+              title: "Dashboard",
+              href: "/dashboard",
+              icon: LayoutDashboard,
+              variant: "default",
+            },
+            {
+              title: "Geographical Map",
+              href: "/map",
+              icon: MapPinned,
+              variant: "ghost",
+            },
+            {
+              title: "Upload CSV",
+              href: "/upload",
+              icon: Upload,
+              variant: "ghost",
+            },
+            {
+              title: "Approval",
+              href: "/approval",
+              icon: FileCog,
+              variant: "ghost",
+              label: pendingApprovalCount > 0 ? pendingApprovalCount.toString() : undefined,
+            },
+            {
+              title: "Approval Log",
+              href: "/approval_log",
+              icon: FileClock,
+              variant: "ghost",
+            },
+          ]}
+        />
+      </div>
+    </aside>
   );
 }

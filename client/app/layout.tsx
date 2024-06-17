@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import SideNavbar from "@/components/SideNavbar";
+import { MaterialTailwindControllerProvider } from "@/components/context";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,15 +19,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={cn("flex min-h-screen bg-white", inter.className, {
-          "debug-screens": process.env.NODE_ENV === "development",
-        })}
-      >
-        {/* sidebar */}
-        <SideNavbar />
-        {/* main page */}
-        <div className="flex-1 p-8">{children}</div>
+      <body className={cn("flex min-h-screen bg-gray-100", inter.className)}>
+        <MaterialTailwindControllerProvider>
+          <SideNavbar />
+          <main className="flex-1 p-8 ml-[calc(100vw-80px)] transition-all duration-300 md:ml-72">
+            {children}
+          </main>
+        </MaterialTailwindControllerProvider>
       </body>
     </html>
   );
