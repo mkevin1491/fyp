@@ -3,15 +3,18 @@
 import axios from "axios";
 import { useState, useCallback } from "react";
 import * as XLSX from "xlsx";
-import withAuth from '@/components/withAuth';
-import { useRouter } from 'next/navigation';
+import withAuth from "@/components/withAuth";
+import { useRouter } from "next/navigation";
 
 const UploadPage = () => {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [arrayBuffer, setArrayBuffer] = useState<ArrayBuffer | null>(null);
-  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [arrayBuffers, setArrayBuffers] = useState<ArrayBuffer[]>([]);
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: "success" | "error" | "info";
+  } | null>(null);
   const router = useRouter();
 
   const parseExcelData = (arrayBuffer: ArrayBuffer) => {
@@ -37,121 +40,185 @@ const UploadPage = () => {
   };
 
   const handleUpload = async () => {
-    if (!selectedFile || !arrayBuffer) {
-      setError("No file selected.");
-      return;
-    }
-
-    let data = [];
-    if (
-      selectedFile.type === "application/vnd.ms-excel" ||
-      selectedFile.type ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    ) {
-      data = parseExcelData(arrayBuffer);
-    } else if (selectedFile.type === "text/csv") {
-      data = await parseCSVData(arrayBuffer);
-    } else {
-      setError("Unsupported file type.");
-      setMessage(null);
-      setNotification({ message: "Unsupported file type. Please upload a CSV or Excel file.", type: 'error' });
-      setTimeout(() => setNotification(null), 3000);
+    if (selectedFiles.length === 0 || arrayBuffers.length === 0) {
+      setError("No files selected.");
       return;
     }
 
     try {
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        router.push('/login');
+        router.push("/login");
         return;
       }
-      const response = await axios.post(
-        "http://127.0.0.1:8080/api/upload",
-        formData,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        const arrayBuffer = arrayBuffers[i];
+
+        let data = [];
+        if (
+          file.type === "application/vnd.ms-excel" ||
+          file.type ===
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ) {
+          data = parseExcelData(arrayBuffer);
+        } else if (file.type === "text/csv") {
+          data = await parseCSVData(arrayBuffer);
+        } else {
+          setError("Unsupported file type.");
+          setMessage(null);
+          setNotification({
+            message:
+              "Unsupported file type. Please upload a CSV or Excel file.",
+            type: "error",
+          });
+          setTimeout(() => setNotification(null), 3000);
+          continue;
         }
-      );
 
-      console.log(response.data); // Log the response data to the console
+        const formData = new FormData();
+        formData.append("file", file);
+        const response = await axios.post(
+          "http://127.0.0.1:8080/api/upload",
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-      const { message } = response.data;
+        console.log(response.data); // Log the response data to the console
 
-      if (message === "All records already exist in either PendingSwitchgear or Switchgear tables.") {
-        setNotification({ message: "All data is already in the approval page or switchgear table.", type: 'info' });
-      } else if (message === "No new records were added to pending switchgear. All records are already in the approval page.") {
-        setNotification({ message: "No new records added. Data is already in the approval page.", type: 'info' });
-      } else {
-        setMessage(message);
-        setError(null);
-        setNotification({ message: "Upload successful! Please go to the approval page.", type: 'success' });
+        const { message } = response.data;
+
+        if (
+          message ===
+          "All records already exist in either PendingSwitchgear or Switchgear tables."
+        ) {
+          setNotification({
+            message:
+              "All data is already in the approval page or switchgear table.",
+            type: "info",
+          });
+        } else if (
+          message ===
+          "No new records were added to pending switchgear. All records are already in the approval page."
+        ) {
+          setNotification({
+            message:
+              "No new records added. Data is already in the approval page.",
+            type: "info",
+          });
+        } else {
+          setMessage(message);
+          setError(null);
+          setNotification({
+            message: "Upload successful! Please go to the approval page.",
+            type: "success",
+          });
+        }
+        setTimeout(() => setNotification(null), 3000); // Hide notification after 3 seconds
       }
-      setTimeout(() => setNotification(null), 3000); // Hide notification after 3 seconds
     } catch (error) {
       console.error(error);
       setMessage(null);
-      setError("An error occurred while uploading the file.");
-      setNotification({ message: "An error occurred while uploading the file. Please try again.", type: 'error' });
+      setError("An error occurred while uploading the files.");
+      setNotification({
+        message:
+          "An error occurred while uploading the files. Please try again.",
+        type: "error",
+      });
       setTimeout(() => setNotification(null), 3000); // Hide notification after 3 seconds
     }
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const files = event.target.files;
     setMessage(null); // Clear previous message
     setError(null); // Clear previous error
 
-    if (file) {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const buffer = e.target?.result as ArrayBuffer;
-        setArrayBuffer(buffer);
-      };
-      reader.readAsArrayBuffer(file);
+    if (files && files.length > 0) {
+      const newFiles = Array.from(files);
+      setSelectedFiles([...selectedFiles, ...newFiles]);
+      const newArrayBuffers = [...arrayBuffers];
+
+      newFiles.forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const buffer = e.target?.result as ArrayBuffer;
+          newArrayBuffers.push(buffer);
+          setArrayBuffers(newArrayBuffers);
+        };
+        reader.readAsArrayBuffer(file);
+      });
     } else {
       setError("Please select a file.");
       setMessage(null); // Clear any success message
     }
 
     // Reset the file input
-    event.target.value = '';
+    event.target.value = "";
   };
 
-  const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
+  const handleDrop = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
 
-    const file = event.dataTransfer.files?.[0];
-    setMessage(null); // Clear previous message
-    setError(null); // Clear previous error
-    setSelectedFile(file);
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const buffer = e.target?.result as ArrayBuffer;
-        setArrayBuffer(buffer);
-      };
-      reader.readAsArrayBuffer(file);
-    } else {
-      setError("Please select a file.");
-      setMessage(null); // Clear any success message
-    }
-  }, []);
+      const files = event.dataTransfer.files;
+      setMessage(null); // Clear previous message
+      setError(null); // Clear previous error
+
+      if (files && files.length > 0) {
+        const newFiles = Array.from(files);
+        setSelectedFiles([...selectedFiles, ...newFiles]);
+        const newArrayBuffers = [...arrayBuffers];
+
+        newFiles.forEach((file) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const buffer = e.target?.result as ArrayBuffer;
+            newArrayBuffers.push(buffer);
+            setArrayBuffers(newArrayBuffers);
+          };
+          reader.readAsArrayBuffer(file);
+        });
+      } else {
+        setError("Please select a file.");
+        setMessage(null); // Clear any success message
+      }
+    },
+    [selectedFiles, arrayBuffers]
+  );
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
   };
 
+  const handleRemoveFile = (index: number) => {
+    const newSelectedFiles = [...selectedFiles];
+    const newArrayBuffers = [...arrayBuffers];
+    newSelectedFiles.splice(index, 1);
+    newArrayBuffers.splice(index, 1);
+    setSelectedFiles(newSelectedFiles);
+    setArrayBuffers(newArrayBuffers);
+  };
+
   return (
     <div className="p-4">
       {notification && (
-        <div className={`fixed top-0 right-0 mt-4 mr-4 px-4 py-2 rounded shadow-lg ${notification.type === 'success' ? 'bg-green-500' : notification.type === 'info' ? 'bg-blue-500' : 'bg-red-500'} text-white`}>
+        <div
+          className={`fixed top-0 right-0 mt-4 mr-4 px-4 py-2 rounded shadow-lg ${
+            notification.type === "success"
+              ? "bg-green-500"
+              : notification.type === "info"
+              ? "bg-blue-500"
+              : "bg-red-500"
+          } text-white`}
+        >
           <p>{notification.message}</p>
         </div>
       )}
@@ -196,14 +263,25 @@ const UploadPage = () => {
               accept=".csv, .xls, .xlsx"
               className="hidden"
               onChange={handleFileChange}
+              multiple
             />
           </label>
         </div>
       </div>
 
-      {selectedFile && (
+      {selectedFiles.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm text-gray-500">Selected file: {selectedFile.name}</p>
+          {selectedFiles.map((file, index) => (
+            <div key={index} className="flex justify-between items-center mb-2">
+              <p className="text-sm text-gray-500">{file.name}</p>
+              <button
+                onClick={() => handleRemoveFile(index)}
+                className="text-red-600 hover:underline"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
@@ -213,7 +291,6 @@ const UploadPage = () => {
       >
         Upload
       </button>
-
     </div>
   );
 };
