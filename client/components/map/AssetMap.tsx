@@ -1,11 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
-import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
+import React, { useEffect, useRef, useState } from "react";
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 
 interface Asset {
   id: string;
-  name: string;
+  functional_location: string;
+  substation_name: string;
   coordinates: [number, number];
+  tev_us_in_db: number | null;
+  hotspot_delta_t_in_c: number | null;
 }
 
 interface AssetMapProps {
@@ -18,103 +21,129 @@ const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>(assets);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const getStatus = (tev: number | null, temperature: number | null): string => {
+    if (tev !== null && tev >= 10) return "Critical";
+    if (tev !== null && tev >= 5) return "Major";
+    if (tev !== null && tev > 0) return "Non-Critical";
+    if (temperature !== null && temperature >= 10) return "Critical";
+    if (temperature !== null && temperature >= 5) return "Major";
+    if (temperature !== null && temperature > 0) return "Non-Critical";
+    return "Unknown";
+  };
+
+  const getMarkerColor = (status: string): string => {
+    switch (status) {
+      case "Critical":
+        return "red";
+      case "Major":
+        return "orange";
+      case "Non-Critical":
+        return "green";
+      default:
+        return "blue";
+    }
+  };
+
   useEffect(() => {
     if (mapContainerRef.current && !mapRef.current) {
-      // Initialize the map with a detailed MapLibre style
       mapRef.current = new maplibregl.Map({
         container: mapContainerRef.current,
-        style: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json', // Detailed MapLibre style URL
-        center: [101.9758, 4.2105], // Centered on Malaysia [lng, lat]
-        zoom: 6, // Initial zoom level
+        style: "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json",
+        center: [101.9758, 4.2105],
+        zoom: 6,
       });
 
-      // Add navigation control (the +/- zoom buttons)
-      mapRef.current.addControl(new maplibregl.NavigationControl(), 'top-right');
+      mapRef.current.addControl(
+        new maplibregl.NavigationControl(),
+        "top-right"
+      );
 
-      // Load additional map layers once the map is loaded
-      mapRef.current.on('load', () => {
-        // Add a GeoJSON source for Malaysia states
-        mapRef.current?.addSource('states', {
-          type: 'geojson',
-          data: '/geoBoundaries-MYS-ADM1_simplified.geojson', // Local file path
+      mapRef.current.on("load", () => {
+        mapRef.current?.addSource("states", {
+          type: "geojson",
+          data: "/geoBoundaries-MYS-ADM1_simplified.geojson",
         });
 
-        // Add a layer to display the state boundaries
         mapRef.current?.addLayer({
-          id: 'state-boundaries',
-          type: 'line',
-          source: 'states',
+          id: "state-boundaries",
+          type: "line",
+          source: "states",
           paint: {
-            'line-color': '#FF0000', // Red color for state boundaries
-            'line-width': 2, // Line width for state boundaries
+            "line-color": "#FF0000",
+            "line-width": 2,
           },
         });
 
-        // Add a GeoJSON source for Malaysia districts
-        mapRef.current?.addSource('districts', {
-          type: 'geojson',
-          data: '/geoBoundaries-MYS-ADM1_simplified.geojson', // Local file path (use the same file for simplicity)
+        mapRef.current?.addSource("districts", {
+          type: "geojson",
+          data: "/geoBoundaries-MYS-ADM1_simplified.geojson",
         });
 
-        // Add a layer to display the district boundaries
         mapRef.current?.addLayer({
-          id: 'district-boundaries',
-          type: 'line',
-          source: 'districts',
+          id: "district-boundaries",
+          type: "line",
+          source: "districts",
           paint: {
-            'line-color': '#0000FF', // Blue color for district boundaries
-            'line-width': 1, // Line width for district boundaries
+            "line-color": "#0000FF",
+            "line-width": 1,
           },
         });
       });
     }
 
     if (mapRef.current && filteredAssets.length > 0) {
-      // Clear existing markers
-      const markers = document.querySelectorAll('.mapboxgl-marker');
-      markers.forEach(marker => marker.remove());
+      const markers = document.querySelectorAll(".mapboxgl-marker");
+      markers.forEach((marker) => marker.remove());
 
-      // Add markers for each asset
-      filteredAssets.forEach(asset => {
-        const [lat, lng] = asset.coordinates; // Coordinates are in [lat, lng] format
+      filteredAssets.forEach((asset) => {
+        const [lat, lng] = asset.coordinates;
+        const status = getStatus(asset.tev_us_in_db, asset.hotspot_delta_t_in_c);
+        const color = getMarkerColor(status);
+
+        console.log(`Adding marker for asset: ${asset.functional_location} with status: ${status} and color: ${color}`);
+
         if (lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90) {
-          new maplibregl.Marker({ color: 'red' })
+          new maplibregl.Marker({ color })
             .setLngLat([lng, lat])
-            .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML(`
-              <h3>ID: ${asset.id}</h3>
-              <p>Name: ${asset.name}</p>
+            .setPopup(
+              new maplibregl.Popup({ offset: 25 }).setHTML(`
+              <h3>Functional Location: ${asset.functional_location}</h3>
+              <p>Substation Name: ${asset.substation_name}</p>
+              <p>Status: ${status}</p>
               <p>Coordinates: [${lng}, ${lat}]</p>
-            `))
+            `)
+            )
             .addTo(mapRef.current as maplibregl.Map);
         } else {
-          console.error(`Invalid coordinates for asset ${asset.id}: [${lat}, ${lng}]`);
+          console.error(
+            `Invalid coordinates for asset ${asset.functional_location}: [${lat}, ${lng}]`
+          );
         }
       });
     }
 
-    // Cleanup function to remove the map when the component unmounts
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
-        mapRef.current = null; // Clean up map reference
+        mapRef.current = null;
       }
     };
   }, [filteredAssets]);
 
-  const handleSearch = (event) => {
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     const query = event.target.value.toLowerCase();
     setSearchQuery(query);
     const filtered = assets.filter(
       (asset) =>
-        asset.name.toLowerCase().includes(query) ||
-        asset.id.toLowerCase().includes(query)
+        asset.functional_location.toLowerCase().includes(query) ||
+        asset.substation_name.toLowerCase().includes(query)
     );
     setFilteredAssets(filtered);
   };
 
   return (
     <div className="relative">
-      <div ref={mapContainerRef} style={{ width: '100%', height: '500px' }} />
+      <div ref={mapContainerRef} style={{ width: "100%", height: "500px" }} />
       <div className="absolute top-4 left-4 z-10 w-full max-w-md">
         <div className="p-2 bg-white rounded-md shadow-md">
           <input

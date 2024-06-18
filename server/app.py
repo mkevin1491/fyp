@@ -296,20 +296,38 @@ def get_switchgear_data():
 def get_switchgear_info():
     try:
         switchgear_data = Switchgear.query.with_entities(
-            Switchgear.id,  # Assuming 'id' is part of your model
+            Switchgear.id,
             Switchgear.functional_location,
+            Switchgear.report_date,
+            Switchgear.defect_from,
+            Switchgear.tev_us_in_db,
+            Switchgear.hotspot_delta_t_in_c,
+            Switchgear.switchgear_type,
+            Switchgear.switchgear_brand,
             Switchgear.substation_name,
+            Switchgear.defect_description_1,
+            Switchgear.defect_description_2,
+            Switchgear.defect_owner,
             Switchgear.latitude,
             Switchgear.longitude
         ).all()
 
         response_data = [
             {
-                'id': record.functional_location,  # Assuming 'id' exists in your model
-                'name': record.substation_name,
+                'id': record.id,
+                'functional_location': record.functional_location,
+                'report_date': record.report_date,
+                'defect_from': record.defect_from,
+                'tev_us_in_db': record.tev_us_in_db,
+                'hotspot_delta_t_in_c': record.hotspot_delta_t_in_c,
+                'switchgear_type': record.switchgear_type,
+                'switchgear_brand': record.switchgear_brand,
+                'substation_name': record.substation_name,
+                'defect_description_1': record.defect_description_1,
+                'defect_description_2': record.defect_description_2,
+                'defect_owner': record.defect_owner,
                 'coordinates': [record.latitude, record.longitude]
             } for record in switchgear_data
-            if -90 <= record.latitude <= 90 and -180 <= record.longitude <= 180
         ]
 
         return jsonify({'data': response_data})
