@@ -169,7 +169,6 @@ pylint==2.17.7
 PyMySQL==1.1.0
 pyparsing==3.1.2
 pyproject-api==1.6.1
-Pyrebase4==4.7.1
 pytest==7.4.4
 pytest-cov==4.1.0
 pytest-sugar==0.9.7

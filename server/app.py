@@ -149,6 +149,7 @@ def get_pending_approvals():
                 'defect_description_1': approval.defect_description_1,
                 'defect_description_2': approval.defect_description_2,
                 'defect_owner': approval.defect_owner,
+                'status': approval.status  # Include status in the response
             } for approval in pending_approvals.items
         ]
         
@@ -309,7 +310,8 @@ def get_switchgear_info():
             Switchgear.defect_description_2,
             Switchgear.defect_owner,
             Switchgear.latitude,
-            Switchgear.longitude
+            Switchgear.longitude,
+            Switchgear.status  # Include status in the query
         ).all()
 
         response_data = [
@@ -326,7 +328,8 @@ def get_switchgear_info():
                 'defect_description_1': record.defect_description_1,
                 'defect_description_2': record.defect_description_2,
                 'defect_owner': record.defect_owner,
-                'coordinates': [record.latitude, record.longitude]
+                'coordinates': [record.latitude, record.longitude],
+                'status': record.status  # Include status in the response
             } for record in switchgear_data
         ]
 

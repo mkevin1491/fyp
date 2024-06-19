@@ -20,12 +20,25 @@ def add_user(email, password):
 def get_user_by_email(email):
     return User.query.filter_by(email=email).first()
 
+def calculate_status(tev_us_in_db, hotspot_delta_t_in_c):
+    if tev_us_in_db is not None and tev_us_in_db >= 10:
+        return "Critical"
+    if tev_us_in_db is not None and tev_us_in_db >= 5:
+        return "Major"
+    if tev_us_in_db is not None and tev_us_in_db > 0:
+        return "Non-Critical"
+    if hotspot_delta_t_in_c is not None and hotspot_delta_t_in_c >= 10:
+        return "Critical"
+    if hotspot_delta_t_in_c is not None and hotspot_delta_t_in_c >= 5:
+        return "Major"
+    if hotspot_delta_t_in_c is not None and hotspot_delta_t_in_c > 0:
+        return "Non-Critical"
+    return "Unknown"
+
 def insert_switchgear_values(dataframe):
     try:
-        # Iterate over each row in the DataFrame
         with db.session.begin_nested():
             for index, row in dataframe.iterrows():
-                # Create a new Switchgear object with values from the DataFrame row
                 switchgear = Switchgear(
                     functional_location=row['Functional Location'],
                     report_date=row['Report Date '],
@@ -38,20 +51,15 @@ def insert_switchgear_values(dataframe):
                     defect_description_1=row['Defect Description 1'],
                     defect_description_2=row['Defect Description 2'],
                     defect_owner=row['Defect Owner'],
-                    latitude=row['latitude'],  # Ensure latitude is included
-                    longitude=row['longitude']  # Ensure longitude is included
+                    latitude=row['latitude'],  
+                    longitude=row['longitude']  
                 )
-                # Add the Switchgear object to the session
+                switchgear.status = calculate_status(switchgear.tev_us_in_db, switchgear.hotspot_delta_t_in_c)
                 db.session.add(switchgear)
-
-        # Commit the changes to the database
         db.session.commit()
-        
-        # Return success message
         return {'message': 'Data inserted successfully'}, 200
 
     except Exception as e:
-        # If an error occurs, rollback the changes and return error message
         db.session.rollback()
         return {'error': str(e)}, 500
 
@@ -69,9 +77,10 @@ def add_pending_switchgear_record(row):
             defect_description_1=row['Defect Description 1'],
             defect_description_2=row['Defect Description 2'],
             defect_owner=row['Defect Owner'],
-            latitude=row['latitude'],  # Ensure latitude is included
-            longitude=row['longitude']  # Ensure longitude is included
+            latitude=row['latitude'],  
+            longitude=row['longitude']  
         )
+        pending_switchgear.status = calculate_status(pending_switchgear.tev_us_in_db, pending_switchgear.hotspot_delta_t_in_c)
         db.session.add(pending_switchgear)
         db.session.commit()
         return True
@@ -94,9 +103,10 @@ def add_switchgear_record(row):
             defect_description_1=row['Defect Description 1'],
             defect_description_2=row['Defect Description 2'],
             defect_owner=row['Defect Owner'],
-            latitude=row['latitude'],  # Ensure latitude is included
-            longitude=row['longitude']  # Ensure longitude is included
+            latitude=row['latitude'],  
+            longitude=row['longitude']  
         )
+        switchgear.status = calculate_status(switchgear.tev_us_in_db, switchgear.hotspot_delta_t_in_c)
         db.session.add(switchgear)
         db.session.commit()
         return True
@@ -121,9 +131,10 @@ def move_pending_to_approved(pending_id: int, message: str) -> bool:
                 defect_description_1=pending_record.defect_description_1,
                 defect_description_2=pending_record.defect_description_2,
                 defect_owner=pending_record.defect_owner,
-                latitude=pending_record.latitude,  # Ensure latitude is included
-                longitude=pending_record.longitude  # Ensure longitude is included
+                latitude=pending_record.latitude,  
+                longitude=pending_record.longitude  
             )
+            switchgear.status = calculate_status(switchgear.tev_us_in_db, switchgear.hotspot_delta_t_in_c)
             db.session.add(switchgear)
             db.session.delete(pending_record)
             db.session.commit()

@@ -9,6 +9,7 @@ interface Asset {
   coordinates: [number, number];
   tev_us_in_db: number | null;
   hotspot_delta_t_in_c: number | null;
+  status: string; // Add status to the Asset interface
 }
 
 interface AssetMapProps {
@@ -20,16 +21,6 @@ const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>(assets);
   const [searchQuery, setSearchQuery] = useState("");
-
-  const getStatus = (tev: number | null, temperature: number | null): string => {
-    if (tev !== null && tev >= 10) return "Critical";
-    if (tev !== null && tev >= 5) return "Major";
-    if (tev !== null && tev > 0) return "Non-Critical";
-    if (temperature !== null && temperature >= 10) return "Critical";
-    if (temperature !== null && temperature >= 5) return "Major";
-    if (temperature !== null && temperature > 0) return "Non-Critical";
-    return "Unknown";
-  };
 
   const getMarkerColor = (status: string): string => {
     switch (status) {
@@ -97,10 +88,11 @@ const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
 
       filteredAssets.forEach((asset) => {
         const [lat, lng] = asset.coordinates;
-        const status = getStatus(asset.tev_us_in_db, asset.hotspot_delta_t_in_c);
-        const color = getMarkerColor(status);
+        const color = getMarkerColor(asset.status);
 
-        console.log(`Adding marker for asset: ${asset.functional_location} with status: ${status} and color: ${color}`);
+        console.log(
+          `Adding marker for asset: ${asset.functional_location} with status: ${asset.status} and color: ${color}`
+        );
 
         if (lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90) {
           new maplibregl.Marker({ color })
@@ -109,7 +101,7 @@ const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
               new maplibregl.Popup({ offset: 25 }).setHTML(`
               <h3>Functional Location: ${asset.functional_location}</h3>
               <p>Substation Name: ${asset.substation_name}</p>
-              <p>Status: ${status}</p>
+              <p>Status: ${asset.status}</p>
               <p>Coordinates: [${lng}, ${lat}]</p>
             `)
             )
