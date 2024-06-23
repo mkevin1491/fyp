@@ -21,7 +21,7 @@ def geocode_address(address, city=None, api_key=None):
         else:
             query = f"{address}, Malaysia"
 
-        logger.debug(f"Geocoding query: {query}")
+        # logger.debug(f"Geocoding query: {query}")
         
         response = requests.get(
             f"https://api.mapbox.com/geocoding/v5/mapbox.places/{query}.json",
@@ -30,7 +30,7 @@ def geocode_address(address, city=None, api_key=None):
         response.raise_for_status()
         data = response.json()
         
-        logger.debug(f"Geocoding result for '{query}': {data}")
+        # logger.debug(f"Geocoding result for '{query}': {data}")
         
         if data['features']:
             longitude, latitude = data['features'][0]['geometry']['coordinates']
@@ -44,9 +44,10 @@ def geocode_address(address, city=None, api_key=None):
         return None, None
 
 def get_city_from_functional_location(functional_location):
-    for prefix, city in LOCATION_MAPPING.items():
-        if functional_location.startswith(prefix):
-            return city
+    if isinstance(functional_location, str):
+        for prefix, city in LOCATION_MAPPING.items():
+            if functional_location.startswith(prefix):
+                return city
     return None
 
 def preprocess_data(file_path):
@@ -62,7 +63,7 @@ def preprocess_data(file_path):
         # Geocode addresses and add latitude and longitude
         def geocode_with_context(row):
             substation_name = row['Substation Name']
-            functional_location = row['Functional Location']
+            functional_location = str(row['Functional Location'])  # Ensure it is treated as a string
             city = get_city_from_functional_location(functional_location)
             return geocode_address(substation_name, city, MAPBOX_API_KEY)
         
@@ -74,4 +75,4 @@ def preprocess_data(file_path):
     return df
 
 # Set logging level to DEBUG to see detailed logs
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)

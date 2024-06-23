@@ -10,8 +10,7 @@ import {
   Upload,
   FileCog,
   FileClock,
-  ChevronRight,
-  ChevronLeft,
+  LineChart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { io } from "socket.io-client";
@@ -89,10 +88,7 @@ export default function SideNavbar() {
     >
       <div className="relative flex flex-col h-full">
         <div className="flex justify-between items-center py-6 px-8">
-          <span className="text-xl font-bold">Material Tailwind</span>
-          <Button onClick={toggleSidebar} variant="secondary" className="rounded-full p-2" aria-label="Toggle Sidebar">
-            {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
-          </Button>
+          <span className="text-xl font-bold">TNB-SWITCHWISE</span>
         </div>
         <Nav
           isCollapsed={isCollapsed}
@@ -104,15 +100,21 @@ export default function SideNavbar() {
               variant: "default",
             },
             {
-              title: "Geographical Map",
-              href: "/map",
-              icon: MapPinned,
-              variant: "ghost",
-            },
-            {
               title: "Upload CSV",
               href: "/upload",
               icon: Upload,
+              variant: "ghost",
+            },
+            {
+              title: "Defect Analytic",
+              href: "/defect_analytic",
+              icon: LineChart,
+              variant: "default",
+            },
+            {
+              title: "Geographical Map",
+              href: "/map",
+              icon: MapPinned,
               variant: "ghost",
             },
             {

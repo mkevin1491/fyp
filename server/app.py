@@ -19,6 +19,7 @@ import tempfile
 import os
 import numpy as np
 import logging
+from sqlalchemy import extract, func, or_
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -60,54 +61,55 @@ def upload_file():
                 data = preprocess_data(file_path)
                 logger.debug("Data preprocessed successfully")
                 data = data.replace({np.nan: None})
-                
-                # Preliminary check to ensure the entire data exists in either the PendingSwitchgear or Switchgear table
-                all_exists = True
-                for index, row in data.iterrows():
-                    pending_record = PendingSwitchgear.query.filter_by(
-                        functional_location=row['Functional Location']
-                    ).first()
-                    switchgear_record = Switchgear.query.filter_by(
-                        functional_location=row['Functional Location']
-                    ).first()
-                    
-                    if not pending_record and not switchgear_record:
-                        all_exists = False
-                        break
 
-                if all_exists:
-                    logger.debug("All records already exist in either PendingSwitchgear or Switchgear tables")
-                    return jsonify({'message': 'All records already exist in either PendingSwitchgear or Switchgear tables.'})
-
-                # Variable to track if any new record is added to PendingSwitchgear
                 new_pending_added = False
 
-                # Continue with existing logic
                 for index, row in data.iterrows():
                     logger.debug(f"Processing row {index}: {row.to_dict()}")
-                    existing_record = Switchgear.query.filter_by(
-                        functional_location=row['Functional Location']
-                    ).first()
+                    functional_location = row['Functional Location']
+                    report_date = row['Report Date ']
+                    defect_description_1 = row['Defect Description 1']
 
-                    if existing_record:
-                        logger.debug(f"Found existing record for {row['Functional Location']}")
-                        if (existing_record.tev_us_in_db != row['TEV/US In DB']) or (existing_record.hotspot_delta_t_in_c != row['Hotspot ∆T In ⁰C']):
-                            add_switchgear_record(row.to_dict())
-                            logger.debug(f"Added new record for updated values for {row['Functional Location']}")
-                        elif existing_record.report_date != row['Report Date ']:
-                            add_switchgear_record(row.to_dict())
-                            logger.debug(f"Added new record for different report date for {row['Functional Location']}")
-                        else:
-                            logger.debug(f"No update needed for {row['Functional Location']}")
+                    # Check if the functional location exists in the Switchgear table
+                    existing_records = Switchgear.query.filter_by(
+                        functional_location=functional_location
+                    ).all()
+
+                    if not existing_records:
+                        # If no existing records for the functional location, add to Switchgear
+                        add_switchgear_record(row.to_dict())
+                        logger.debug(f"New record added to Switchgear table: {row.to_dict()}")
                     else:
-                        add_pending_switchgear_record(row.to_dict())
-                        logger.debug(f"Pending approval for new record {row['Functional Location']}")
-                        new_pending_added = True
+                        match_found = False
+                        for existing_record in existing_records:
+                            if existing_record.report_date == report_date and existing_record.defect_description_1 == defect_description_1:
+                                if (existing_record.tev_us_in_db == row['TEV/US In DB'] and
+                                    existing_record.hotspot_delta_t_in_c == row['Hotspot ∆T In ⁰C'] and
+                                    existing_record.defect_from == row['Defect From'] and
+                                    existing_record.switchgear_type == row['Switchgear Type'] and
+                                    existing_record.switchgear_brand == row['Switchgear Brand'] and
+                                    existing_record.substation_name == row['Substation Name'] and
+                                    existing_record.defect_description_2 == row['Defect Description 2'] and
+                                    existing_record.defect_owner == row['Defect Owner']):
+                                    # Record is exactly the same, ignore it
+                                    logger.debug(f"Ignored duplicate data: {row.to_dict()}")
+                                    match_found = True
+                                    break
+                                else:
+                                    # Record exists with the same report date and defect description, but data is different
+                                    add_pending_switchgear_record(row.to_dict())
+                                    logger.debug(f"Pending approval for updated values: {row.to_dict()}")
+                                    new_pending_added = True
+                                    match_found = True
+                                    break
+                        if not match_found:
+                            # If no matching report date and defect description, add to Switchgear
+                            add_switchgear_record(row.to_dict())
+                            logger.debug(f"Added new record for different report date for {functional_location}")
 
                 if not new_pending_added:
-                    return jsonify({'message': 'No new records were added to pending switchgear. All records are already in the approval page.'})
+                    return jsonify({'message': 'No new records were added to pending switchgear. All records are already in the approval page or added to switchgear.'})
 
-                # Emit the updated count to all connected clients
                 count = db.session.query(PendingSwitchgear).count()
                 socketio.emit('update_pending_approvals_count', {'count': count})
 
@@ -125,7 +127,6 @@ def upload_file():
     except Exception as e:
         logger.error(f"Error during file upload: {e}")
         return jsonify({'error': str(e)}), 500
-
 
 @app.route("/api/pending-approvals", methods=['GET'])
 def get_pending_approvals():
@@ -296,6 +297,8 @@ def get_switchgear_data():
 @app.route("/api/switchgear-info", methods=['GET'])
 def get_switchgear_info():
     try:
+        search_query = request.args.get('search', '').lower()
+
         switchgear_data = Switchgear.query.with_entities(
             Switchgear.id,
             Switchgear.functional_location,
@@ -331,12 +334,80 @@ def get_switchgear_info():
                 'coordinates': [record.latitude, record.longitude],
                 'status': record.status  # Include status in the response
             } for record in switchgear_data
+            if search_query in record.functional_location.lower() or
+               search_query in record.report_date.lower() or
+               search_query in record.defect_from.lower() or
+               search_query in record.tev_us_in_db.lower() or
+               search_query in record.hotspot_delta_t_in_c.lower() or
+               search_query in record.switchgear_type.lower() or
+               search_query in record.switchgear_brand.lower() or
+               search_query in record.substation_name.lower() or
+               search_query in record.defect_description_1.lower() or
+               search_query in record.defect_description_2.lower() or
+               search_query in record.defect_owner.lower() or
+               search_query in record.status.lower()
         ]
 
         return jsonify({'data': response_data})
     except Exception as e:
         logger.error(f"Error fetching switchgear info: {e}")
         return jsonify({'error': str(e)}), 500
+
+
+month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+state_map = {
+    'A': 'Perak', 'B': 'Selangor', 'C': 'Pahang', 'D': 'Kelantan', 'F': 'Putrajaya',
+    'J': 'Johor', 'K': 'Kedah', 'M': 'Malacca', 'N': 'Negeri Sembilan', 'P': 'Penang',
+    'Q': 'Sarawak', 'R': 'Perlis', 'S': 'Sabah', 'T': 'Terengganu', 'W': 'Kuala Lumpur'
+}
+
+def match_defect_description(desc):
+    # Function to determine the correct matching criteria based on input
+    if ' ' in desc:
+        return desc
+    else:
+        return f'{desc} %'
+
+@app.route('/api/defect-analytics', methods=['GET'])
+def get_defect_analytics():
+    defect_description = request.args.get('defect_description_1', default=None, type=str)
+    year = request.args.get('year', default=None, type=int)
+    selected_states = request.args.getlist('states[]')
+
+    query = db.session.query(
+        func.month(Switchgear.report_date).label('month'),
+        func.substr(Switchgear.functional_location, 1, 1).label('state_initial'),
+        func.count(func.distinct(Switchgear.functional_location)).label('unique_functional_locations')
+    )
+
+    if defect_description:
+        # Determine the matching criteria based on input defect_description_1
+        match_criteria = match_defect_description(defect_description)
+        query = query.filter(Switchgear.defect_description_1.ilike(match_criteria))
+
+    if year:
+        query = query.filter(func.year(Switchgear.report_date) == year)
+
+    if selected_states:
+        state_initials = [k for k, v in state_map.items() if v in selected_states]
+        state_filters = [Switchgear.functional_location.like(f'{initial}%') for initial in state_initials]
+        query = query.filter(or_(*state_filters))
+
+    query = query.group_by(
+        func.month(Switchgear.report_date),
+        func.substr(Switchgear.functional_location, 1, 1)
+    ).all()
+
+    result = [
+        {
+            'month': month_names[month - 1],
+            'state': state_map[state_initial],
+            'unique_functional_locations': count
+        } for month, state_initial, count in query
+    ]
+
+    return jsonify({'data': result})
 
 if __name__ == "__main__":
     socketio.run(app, debug=True, port=8080)

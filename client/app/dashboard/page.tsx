@@ -5,21 +5,23 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import withAuth from "@/components/withAuth";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  LabelList,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
-import { Card, CardBody, Typography, Button } from "@material-tailwind/react";
-import { StatisticsCard } from "@/components/statistics-card";
+  Card,
+  CardBody,
+  Typography,
+  Button,
+  CardHeader,
+} from "@material-tailwind/react";
+import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
+import {
+  IconButton,
+  Menu,
+  MenuHandler,
+  MenuList,
+  MenuItem,
+} from "@material-tailwind/react";
+import BarChartComponent from "@/components/BarChartComponent";
+import PieChartComponent from "@/components/PieChartComponent";
+import BorderCard from "@/components/BorderCard";
 
 const DashboardPage = () => {
   const [user, setUser] = useState<{ name: string } | null>(null);
@@ -27,7 +29,10 @@ const DashboardPage = () => {
   const [switchgearData, setSwitchgearData] = useState([]);
   const [totalSwitchgear, setTotalSwitchgear] = useState(0);
   const [criticalSwitchgear, setCriticalSwitchgear] = useState(0);
+  const [majorSwitchgear, setMajorSwitchgear] = useState(0);
+  const [nonCriticalSwitchgear, setNonCriticalSwitchgear] = useState(0);
   const [brandData, setBrandData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -72,13 +77,32 @@ const DashboardPage = () => {
         const data = response.data.data;
         setSwitchgearData(data);
 
-        // Calculate statistics
-        const total = data.length;
-        const critical = data.filter(
-          (item) => item.status === "Critical"
-        ).length;
+        const uniqueTotalSwitchgear = new Set(
+          data.map((item) => item.functional_location)
+        );
+        setTotalSwitchgear(uniqueTotalSwitchgear.size);
 
-        // Calculate brand data for pie chart
+        const uniqueCriticalSwitchgear = new Set(
+          data
+            .filter((item) => item.status === "Critical")
+            .map((item) => item.functional_location)
+        );
+        setCriticalSwitchgear(uniqueCriticalSwitchgear.size);
+
+        const uniqueMajorSwitchgear = new Set(
+          data
+            .filter((item) => item.status === "Major")
+            .map((item) => item.functional_location)
+        );
+        setMajorSwitchgear(uniqueMajorSwitchgear.size);
+
+        const uniqueNonCriticalSwitchgear = new Set(
+          data
+            .filter((item) => item.status === "Minor")
+            .map((item) => item.functional_location)
+        );
+        setNonCriticalSwitchgear(uniqueNonCriticalSwitchgear.size);
+
         const brandCount = {};
         data.forEach((item) => {
           if (item.status === "Critical") {
@@ -93,8 +117,6 @@ const DashboardPage = () => {
           value: brandCount[key],
         }));
 
-        setTotalSwitchgear(total);
-        setCriticalSwitchgear(critical);
         setBrandData(brandData);
       } catch (error) {
         console.error("Error fetching switchgear data:", error);
@@ -128,15 +150,31 @@ const DashboardPage = () => {
   };
 
   if (!user) {
-    return <div>Loading...</div>;
+    return null;
   }
 
-  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const filteredData = switchgearData.filter((item) => {
+    return (
+      (item.functional_location && item.functional_location.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (item.defect_from && item.defect_from.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (item.switchgear_type && item.switchgear_type.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (item.switchgear_brand && item.switchgear_brand.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (item.substation_name && item.substation_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (item.defect_description_1 && item.defect_description_1.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (item.defect_description_2 && item.defect_description_2.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (item.defect_owner && item.defect_owner.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (item.status && item.status.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  });
 
   return (
-    <div className="mt-12 mb-8 flex flex-col gap-12">
-      <div className="mb-8">
-        <Typography variant="h5" className="mb-4">
+    <div className="mt-12">
+      <div className="mb-8 flex items-center justify-between">
+        <Typography variant="h5" className="mb-4, pl-1">
           Welcome, {user.name}
         </Typography>
         <Button onClick={handleLogout} variant="gradient" color="blue">
@@ -144,79 +182,70 @@ const DashboardPage = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-        <StatisticsCard
-          color="blue"
-          icon={<i className="fas fa-cogs"></i>}
-          title="Total Switchgear"
-          value={totalSwitchgear}
+      <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-6">
+        <BorderCard
+          title={`Total: ${totalSwitchgear}`}
+          description="Total Switchgear"
+          color="border-t-blue-600"
         />
-        <StatisticsCard
-          color="red"
-          icon={<i className="fas fa-exclamation-triangle"></i>}
-          title="Critical Switchgear"
-          value={criticalSwitchgear}
+        <BorderCard
+          title={`Total: ${criticalSwitchgear}`}
+          description="Critical Switchgear"
+          color="border-t-red-600"
+        />
+        <BorderCard
+          title={`Total: ${majorSwitchgear}`}
+          description="Major Switchgear"
+          color="border-t-yellow-600"
+        />
+        <BorderCard
+          title={`Total: ${nonCriticalSwitchgear}`}
+          description="Non-Critical Switchgear"
+          color="border-t-green-600"
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardBody>
-            <Typography variant="h6" className="mb-4">
-              Bar Chart
-            </Typography>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart
-                width={500}
-                height={300}
-                data={chartData}
-                margin={{
-                  top: 5,
-                  right: 30,
-                  left: 20,
-                  bottom: 5,
-                }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="functional_locations" fill="#8884d8">
-                  <LabelList dataKey="functional_locations" position="top" />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+      <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
+        <Card className="overflow-hidden border border-blue-gray-100 shadow-sm">
+          <CardHeader
+            floated={false}
+            shadow={false}
+            color="transparent"
+            className="m-0 flex items-center justify-between p-6"
+          >
+            <div>
+              <Typography variant="h6" color="blue-gray" className="mb-1">
+                Registered Switchgear
+              </Typography>
+            </div>
+            <Menu placement="left-start">
+              <MenuHandler>
+                <IconButton size="sm" variant="text" color="blue-gray">
+                  <EllipsisVerticalIcon
+                    strokeWidth={3}
+                    fill="currentColor"
+                    className="h-6 w-6"
+                  />
+                </IconButton>
+              </MenuHandler>
+              <MenuList>
+                <MenuItem>Action</MenuItem>
+                <MenuItem>Another Action</MenuItem>
+                <MenuItem>Something else here</MenuItem>
+              </MenuList>
+            </Menu>
+          </CardHeader>
+          <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
+            <BarChartComponent data={chartData} />
           </CardBody>
         </Card>
 
-        <Card>
+        <Card className="border border-blue-gray-100 shadow-sm">
           <CardBody>
             <Typography variant="h6" className="mb-4">
-              Critical Switchgear Brands
+              Switchgear Brands Status: Critical
             </Typography>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={brandData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={(entry) => entry.name}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {brandData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            <PieChartComponent data={brandData} />
           </CardBody>
         </Card>
       </div>
@@ -226,52 +255,49 @@ const DashboardPage = () => {
           <Typography variant="h6" color="blue-gray" className="mb-1">
             Switchgear Table
           </Typography>
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="border border-gray-300 rounded-lg p-2 mb-4"
+          />
         </div>
         <Card className="border border-blue-gray-100 shadow-sm">
           <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
             <table className="w-full min-w-[640px] table-auto mt-4">
               <thead>
                 <tr>
-                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
-                    Functional Location
-                  </th>
-                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
-                    Report Date
-                  </th>
-                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
-                    Defect From
-                  </th>
-                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
-                    TEV/US In DB
-                  </th>
-                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
-                    Hotspot ∆T In ⁰C
-                  </th>
-                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
-                    Switchgear Type
-                  </th>
-                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
-                    Switchgear Brand
-                  </th>
-                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
-                    Substation Name
-                  </th>
-                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
-                    Defect Description 1
-                  </th>
-                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
-                    Defect Description 2
-                  </th>
-                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
-                    Defect Owner
-                  </th>
-                  <th className="border-b border-blue-gray-50 py-3 px-5 text-center">
-                    Status
-                  </th>
+                  {[
+                    "Functional Location",
+                    "Report Date",
+                    "Defect From",
+                    "TEV/US In DB",
+                    "Hotspot ∆T In ⁰C",
+                    "Switchgear Type",
+                    "Switchgear Brand",
+                    "Substation Name",
+                    "Defect Description 1",
+                    "Defect Description 2",
+                    "Defect Owner",
+                    "Status",
+                  ].map((el) => (
+                    <th
+                      key={el}
+                      className="border-b border-blue-gray-50 py-3 px-5 text-center"
+                    >
+                      <Typography
+                        variant="small"
+                        className="text-[11px] font-medium uppercase text-blue-gray-400"
+                      >
+                        {el}
+                      </Typography>
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {switchgearData.map((item) => (
+                {filteredData.map((item) => (
                   <tr key={item.id} className="border-b border-blue-gray-50">
                     <td className="py-3 px-5">{item.functional_location}</td>
                     <td className="py-3 px-5">
@@ -292,7 +318,25 @@ const DashboardPage = () => {
                     <td className="py-3 px-5">{item.defect_description_1}</td>
                     <td className="py-3 px-5">{item.defect_description_2}</td>
                     <td className="py-3 px-5">{item.defect_owner}</td>
-                    <td className="py-3 px-5">{item.status}</td>
+                    <td className="py-3 px-5">
+                      {item.status === "Critical" ? (
+                        <span className="inline-flex items-center rounded-md bg-red-100 px-2 py-0.5 text-sm font-medium text-red-800 dark:bg-red-900 dark:text-red-300">
+                          Critical
+                        </span>
+                      ) : item.status === "Major" ? (
+                        <span className="inline-flex items-center rounded-md bg-yellow-100 px-2 py-0.5 text-sm font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
+                          Major
+                        </span>
+                      ) : item.status === "Minor" ? (
+                        <span className="inline-flex items-center rounded-md bg-green-100 px-2 py-0.5 text-sm font-medium text-green-800 dark:bg-green-900 dark:text-green-300">
+                          Minor
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-sm font-medium text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                          Unknown
+                        </span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -303,5 +347,4 @@ const DashboardPage = () => {
     </div>
   );
 };
-
 export default withAuth(DashboardPage);

@@ -7,7 +7,7 @@ from database.modelhandler import get_user_by_email  # Import the function
 jwt = JWTManager()
 
 def create_token(identity):
-    return create_access_token(identity=identity, expires_delta=timedelta(days=1))
+    return create_access_token(identity=identity, expires_delta=timedelta(hours=12))
 
 @jwt.user_identity_loader
 def user_identity_lookup(user):

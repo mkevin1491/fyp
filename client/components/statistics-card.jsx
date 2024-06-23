@@ -9,17 +9,17 @@ import PropTypes from "prop-types";
 
 export function StatisticsCard({ color, icon, title, value, footer }) {
   return (
-    <Card className="border border-blue-gray-100 shadow-sm">
+    <Card className="relative border border-blue-gray-100 shadow-sm overflow-hidden h-full">
       <CardHeader
         variant="gradient"
         color={color}
         floated={false}
         shadow={false}
-        className="absolute grid h-12 w-12 place-items-center"
+        className={`absolute top-0 left-0 h-16 w-16 rounded-lg flex items-center justify-center mt-n4 bg-gradient-to-r from-${color}-500 to-${color}-700 text-white`}
       >
         {icon}
       </CardHeader>
-      <CardBody className="p-4 text-right">
+      <CardBody className="pt-10 p-4 text-right">
         <Typography variant="small" className="font-normal text-blue-gray-600">
           {title}
         </Typography>

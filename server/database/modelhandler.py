@@ -26,13 +26,13 @@ def calculate_status(tev_us_in_db, hotspot_delta_t_in_c):
     if tev_us_in_db is not None and tev_us_in_db >= 5:
         return "Major"
     if tev_us_in_db is not None and tev_us_in_db > 0:
-        return "Non-Critical"
+        return "Minor"
     if hotspot_delta_t_in_c is not None and hotspot_delta_t_in_c >= 10:
         return "Critical"
     if hotspot_delta_t_in_c is not None and hotspot_delta_t_in_c >= 5:
         return "Major"
     if hotspot_delta_t_in_c is not None and hotspot_delta_t_in_c > 0:
-        return "Non-Critical"
+        return "Minor"
     return "Unknown"
 
 def insert_switchgear_values(dataframe):

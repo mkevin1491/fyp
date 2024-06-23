@@ -71,7 +71,7 @@ const MapPage = () => {
   };
 
   if (!user) {
-    return <div>Loading...</div>;
+    return null;
   }
 
   return (
