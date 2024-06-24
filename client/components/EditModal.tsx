@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogHeader,
@@ -10,6 +10,14 @@ import {
 
 const EditModal = ({ isOpen, onClose, item, onConfirm }) => {
   const [formData, setFormData] = useState({ ...item });
+  const [status, setStatus] = useState("Unknown");
+
+  useEffect(() => {
+    // Update status whenever tev_us_in_db or hotspot_delta_t_in_c changes
+    const { tev_us_in_db, hotspot_delta_t_in_c } = formData;
+    const newStatus = calculateStatus(tev_us_in_db, hotspot_delta_t_in_c);
+    setStatus(newStatus);
+  }, [formData.tev_us_in_db, formData.hotspot_delta_t_in_c]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -40,11 +48,25 @@ const EditModal = ({ isOpen, onClose, item, onConfirm }) => {
     />
   );
 
+   // Function to calculate the status based on tev_us_in_db and hotspot_delta_t_in_c
+   const calculateStatus = (tev_us_in_db, hotspot_delta_t_in_c) => {
+    if (tev_us_in_db >= 10 || hotspot_delta_t_in_c >= 10) {
+      return "Critical";
+    } else if (tev_us_in_db >= 5 || hotspot_delta_t_in_c >= 5) {
+      return "Major";
+    } else if (tev_us_in_db > 0 || hotspot_delta_t_in_c > 0) {
+      return "Minor";
+    } else {
+      return "Unknown";
+    }
+  };
+
   const handleConfirm = () => {
     // Format the report_date before confirming
     const formattedData = {
       ...formData,
       report_date: formatDate(formData.report_date),
+      status: status,  // Ensure status is included
     };
     onConfirm(formattedData);
   };
@@ -114,7 +136,7 @@ const EditModal = ({ isOpen, onClose, item, onConfirm }) => {
           <Input
             label="Status"
             name="status"
-            value={formData.status}
+            value={status}
             onChange={handleChange}
           />
         </div>
