@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -19,9 +19,6 @@ interface AssetMapProps {
 const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const [filteredAssets, setFilteredAssets] = useState<Asset[]>(assets);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [duplicateCoordinates, setDuplicateCoordinates] = useState<string[]>([]);
 
   const getMarkerColor = (status: string): string => {
     switch (status) {
@@ -45,10 +42,7 @@ const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
         zoom: 6,
       });
 
-      mapRef.current.addControl(
-        new maplibregl.NavigationControl(),
-        "top-right"
-      );
+      mapRef.current.addControl(new maplibregl.NavigationControl(), "top-right");
 
       mapRef.current.on("load", () => {
         mapRef.current?.addSource("states", {
@@ -83,11 +77,11 @@ const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
       });
     }
 
-    if (mapRef.current && filteredAssets.length > 0) {
+    if (mapRef.current && assets.length > 0) {
       const markers = document.querySelectorAll(".mapboxgl-marker");
       markers.forEach((marker) => marker.remove());
 
-      filteredAssets.forEach((asset) => {
+      assets.forEach((asset) => {
         const [lat, lng] = asset.coordinates;
         const color = getMarkerColor(asset.status);
 
@@ -95,22 +89,16 @@ const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
           `Adding marker for asset: ${asset.functional_location} with status: ${asset.status} and color: ${color}`
         );
 
-        if (
-          !duplicateCoordinates.includes(asset.functional_location) && // Check if the functional location is not in duplicateCoordinates
-          lng >= -180 &&
-          lng <= 180 &&
-          lat >= -90 &&
-          lat <= 90
-        ) {
+        if (lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90) {
           new maplibregl.Marker({ color })
             .setLngLat([lng, lat])
             .setPopup(
               new maplibregl.Popup({ offset: 25 }).setHTML(`
-              <h3>Functional Location: ${asset.functional_location}</h3>
-              <p>Substation Name: ${asset.substation_name}</p>
-              <p>Status: ${asset.status}</p>
-              <p>Coordinates: [${lng}, ${lat}]</p>
-            `)
+                <h3>Functional Location: ${asset.functional_location}</h3>
+                <p>Substation Name: ${asset.substation_name}</p>
+                <p>Status: ${asset.status}</p>
+                <p>Coordinates: [${lng}, ${lat}]</p>
+              `)
             )
             .addTo(mapRef.current as maplibregl.Map);
         } else {
@@ -127,66 +115,9 @@ const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
         mapRef.current = null;
       }
     };
-  }, [filteredAssets, duplicateCoordinates]); // Include duplicateCoordinates in the dependency array
-
-  useEffect(() => {
-    const uniqueCoordinates: { [key: string]: string } = {};
-    const duplicates: string[] = [];
-
-    assets.forEach((asset) => {
-      const [lat, lng] = asset.coordinates;
-      const key = `${lat},${lng}`;
-
-      if (uniqueCoordinates[key]) {
-        duplicates.push(uniqueCoordinates[key]);
-        duplicates.push(asset.functional_location);
-      } else {
-        uniqueCoordinates[key] = asset.functional_location;
-      }
-    });
-
-    setDuplicateCoordinates(duplicates);
   }, [assets]);
 
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const query = event.target.value.toLowerCase();
-    setSearchQuery(query);
-    const filtered = assets.filter(
-      (asset) =>
-        asset.functional_location.toLowerCase().includes(query) ||
-        asset.substation_name.toLowerCase().includes(query)
-    );
-    setFilteredAssets(filtered);
-  };
-
-  return (
-    <div className="relative">
-      <div ref={mapContainerRef} style={{ width: "100%", height: "500px" }} />
-      <div className="absolute top-4 left-4 z-10 w-full max-w-md">
-        <div className="p-2 bg-white rounded-md shadow-md">
-          <input
-            type="text"
-            placeholder="Find the functional location"
-            value={searchQuery}
-            onChange={handleSearch}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md"
-          />
-        </div>
-      </div>
-      {duplicateCoordinates.length > 0 && (
-        <div className="absolute top-20 left-4 z-10 w-full max-w-md">
-          <div className="p-2 bg-white rounded-md shadow-md">
-            <h3>Duplicate Coordinates Found:</h3>
-            <ul>
-              {duplicateCoordinates.map((location, index) => (
-                <li key={index}>{location}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  return <div ref={mapContainerRef} style={{ width: "100%", height: "500px" }} />;
 };
 
 export default AssetMap;

@@ -138,6 +138,7 @@ const EditModal = ({ isOpen, onClose, item, onConfirm }) => {
             name="status"
             value={status}
             onChange={handleChange}
+            disabled
           />
         </div>
       </DialogBody>
