@@ -49,6 +49,11 @@ const UploadPage = () => {
   const handleUpload = async () => {
     if (selectedFiles.length === 0 || arrayBuffers.length === 0) {
       setError("No files selected.");
+      setNotification({
+        message: "No files selected.",
+        type: "error",
+      });
+      setTimeout(() => setNotification(null), 3000);
       return;
     }
 
@@ -76,8 +81,7 @@ const UploadPage = () => {
           setError("Unsupported file type.");
           setMessage(null);
           setNotification({
-            message:
-              "Unsupported file type. Please upload a CSV or Excel file.",
+            message: "Unsupported file type. Please upload a CSV or Excel file.",
             type: "error",
           });
           setTimeout(() => setNotification(null), 3000);
@@ -133,8 +137,7 @@ const UploadPage = () => {
       setMessage(null);
       setError("An error occurred while uploading the files.");
       setNotification({
-        message:
-          "An error occurred while uploading the files. Please try again.",
+        message: "An error occurred while uploading the files. Please try again.",
         type: "error",
       });
       setTimeout(() => setNotification(null), 3000); // Hide notification after 3 seconds

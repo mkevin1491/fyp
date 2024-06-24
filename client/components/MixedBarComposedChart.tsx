@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+"use client";
+import React from "react";
 import {
-  BarChart,
+  ComposedChart,
   Bar,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -11,76 +12,113 @@ import {
   ResponsiveContainer,
   LabelList,
 } from "recharts";
-import { Select, Option, Typography } from "@material-tailwind/react";
+import { Select, Option, Button, Typography } from "@material-tailwind/react";
 
 const monthNames = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+const states = [
+  "Perak",
+  "Selangor",
+  "Pahang",
+  "Kelantan",
+  "Putrajaya",
+  "Johor",
+  "Kedah",
+  "Malacca",
+  "Negeri Sembilan",
+  "Penang",
+  "Sarawak",
+  "Perlis",
+  "Sabah",
+  "Terengganu",
+  "Kuala Lumpur",
+];
+const stateColors = [
+  "#4CAF50",
+  "#2196F3",
+  "#FF5722",
+  "#673AB7",
+  "#795548",
+  "#E91E63",
+  "#009688",
+  "#FF9800",
+  "#CDDC39",
+  "#9C27B0",
+  "#FFC107",
+  "#607D8B",
+  "#FFEB3B",
+  "#00BCD4",
+  "#F44336",
 ];
 
-const statesList = [
-  'Perak', 'Selangor', 'Pahang', 'Kelantan', 'Putrajaya', 'Johor', 'Kedah', 'Malacca',
-  'Negeri Sembilan', 'Penang', 'Sarawak', 'Perlis', 'Sabah', 'Terengganu', 'Kuala Lumpur'
-];
+interface DefectData {
+  month: string;
+  total_defects: number; // Add total_defects for the line chart
+  [key: string]: number | string;
+}
 
-const BarChartComponent = () => {
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [states, setStates] = useState<string[]>([]);
-  const [chartData, setChartData] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+interface MixedBarComposedChartProps {
+  data: DefectData[];
+  defectDescription: string;
+  setDefectDescription: (value: string) => void;
+  year: number | undefined;
+  setYear: (value: number | undefined) => void;
+  availableYears: number[];
+  selectedStates: string[];
+  handleStateChange: (state: string) => void;
+  dropdownOpen: boolean;
+  toggleDropdown: () => void;
+  searchTerm: string;
+  setSearchTerm: (value: string) => void;
+  filteredStates: string[];
+  handleFilterButtonClick: () => void;
+}
 
-  const fetchData = async () => {
-    try {
-      const response = await axios.get("http://localhost:8080/api/switchgear-data", {
-        params: {
-          year: year,
-          'states[]': states
-        }
-      });
-
-      const formattedData = monthNames.map((month) => {
-        const monthData = response.data.data.find(item => item.month === month) || {};
-        return {
-          month,
-          functional_locations: monthData.functional_locations || 0
-        };
-      });
-
-      setChartData(formattedData);
-    } catch (error) {
-      console.error("Error fetching chart data:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [year, states]);
-
-  const availableYears = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i);
-
-  const handleStateChange = (state: string) => {
-    setStates((prevSelectedStates) => {
-      if (prevSelectedStates.includes(state)) {
-        return prevSelectedStates.filter((s) => s !== state);
-      } else {
-        return [...prevSelectedStates, state];
-      }
-    });
-  };
-
-  const toggleDropdown = () => {
-    setDropdownOpen(!dropdownOpen);
-  };
-
-  const filteredStates = statesList.filter((state) => 
-    state.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
+const MixedBarComposedChart: React.FC<MixedBarComposedChartProps> = ({
+  data,
+  defectDescription,
+  setDefectDescription,
+  year,
+  setYear,
+  availableYears,
+  selectedStates,
+  handleStateChange,
+  dropdownOpen,
+  toggleDropdown,
+  searchTerm,
+  setSearchTerm,
+  filteredStates,
+  handleFilterButtonClick
+}) => {
   return (
     <div>
       <div className="flex flex-wrap items-center mb-4">
-        <div className="flex items-center mr-4 pl-6">
+        <div className="flex items-center mr-4 pl-5">
+          <Typography variant="small" className="mr-2 text-gray-500">
+            Defect Description:
+          </Typography>
+          <Select value={defectDescription} onChange={(e) => setDefectDescription(e)}>
+            <Option value="ARCHING SOUND">ARCHING SOUND</Option>
+            <Option value="CORONA DISCHARGE">CORONA DISCHARGE</Option>
+            <Option value="HOTSPOT">HOTSPOT</Option>
+            <Option value="MECHANICAL VIBRATION">MECHANICAL VIBRATION</Option>
+            <Option value="TEV">TEV</Option>
+            <Option value="TRACKING SOUND">TRACKING SOUND</Option>
+          </Select>
+        </div>
+        <div className="flex items-center mr-4">
           <Typography variant="small" className="mr-2 text-gray-500">
             Year:
           </Typography>
@@ -135,7 +173,7 @@ const BarChartComponent = () => {
                           type="checkbox" 
                           value={state} 
                           className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500" 
-                          checked={states.includes(state)}
+                          checked={selectedStates.includes(state)}
                           onChange={() => handleStateChange(state)}
                         />
                         <label htmlFor={`checkbox-item-${state}`} className="w-full ml-2 text-sm font-medium text-gray-900 rounded dark:text-gray-300">{state}</label>
@@ -147,31 +185,34 @@ const BarChartComponent = () => {
             )}
           </div>
         </div>
+        <div className="flex items-center">
+          <Button onClick={handleFilterButtonClick} color="blue">
+            Filter
+          </Button>
+        </div>
       </div>
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart
-          width={500}
-          height={300}
-          data={chartData}
-          margin={{
-            top: 5,
-            right: 30,
-            left: 20,
-            bottom: 5,
-          }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
+      <ResponsiveContainer width="100%" height={400}>
+        <ComposedChart data={data}>
+          <CartesianGrid stroke="#f5f5f5" />
           <XAxis dataKey="month" />
           <YAxis />
           <Tooltip />
           <Legend />
-          <Bar dataKey="functional_locations" fill="#8884d8">
-            <LabelList dataKey="functional_locations" position="top" />
-          </Bar>
-        </BarChart>
+          {states.map((state, index) => (
+            <Bar
+              key={state}
+              dataKey={state}
+              fill={stateColors[index]}
+              stackId="a"
+            >
+              <LabelList dataKey={state} position="top" />
+            </Bar>
+          ))}
+          <Line type="monotone" dataKey="total_defects" stroke="#ff7300" />
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   );
 };
 
-export default BarChartComponent;
+export default MixedBarComposedChart;

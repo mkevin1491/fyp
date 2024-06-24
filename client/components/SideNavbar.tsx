@@ -10,7 +10,9 @@ import {
   Upload,
   FileCog,
   FileClock,
-  LineChart
+  LineChart,
+  Trello,
+  Table2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { io } from "socket.io-client";
@@ -106,6 +108,12 @@ export default function SideNavbar() {
               variant: "ghost",
             },
             {
+              title: "Switchgear List",
+              href: "/switchgear_list",
+              icon: Table2,
+              variant: "ghost",
+            },
+            {
               title: "Defect Analytic",
               href: "/defect_analytic",
               icon: LineChart,
@@ -115,6 +123,12 @@ export default function SideNavbar() {
               title: "Geographical Map",
               href: "/map",
               icon: MapPinned,
+              variant: "ghost",
+            },
+            {
+              title: "Generate Report",
+              href: "/generate_report",
+              icon: Trello,
               variant: "ghost",
             },
             {

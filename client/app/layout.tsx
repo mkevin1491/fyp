@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import SideNavbar from "@/components/SideNavbar";
 import { MaterialTailwindControllerProvider } from "@/components/context";
+import Navbar from "@/components/navbar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,6 +24,7 @@ export default function RootLayout({
         <MaterialTailwindControllerProvider>
           <SideNavbar />
           <main className="flex-1 p-8 ml-[calc(100vw-80px)] transition-all duration-300 md:ml-72">
+          <Navbar />
             {children}
           </main>
         </MaterialTailwindControllerProvider>

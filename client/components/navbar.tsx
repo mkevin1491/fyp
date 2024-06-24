@@ -1,13 +1,9 @@
-// components/Navbar.tsx
 "use client";
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import axios from "axios";
-import { Navbar, Collapse, Typography, Button, IconButton } from "@material-tailwind/react";
-import { ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import React from 'react';
+import { useRouter } from 'next/navigation'; // Assuming you're using the next/navigation package
+import axios from 'axios';
 
-const CustomNavbar = () => {
-  const [openNav, setOpenNav] = useState(false);
+const Navbar = () => {
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -31,79 +27,32 @@ const CustomNavbar = () => {
     }
   };
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 960) {
-        setOpenNav(false);
-      }
-    };
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
-
-  const navList = (
-    <ul className="mb-4 mt-2 flex flex-col gap-2 lg:mb-0 lg:mt-0 lg:flex-row lg:items-center lg:gap-6">
-      <Typography as="li" variant="small" color="blue-gray" className="capitalize">
-        <a href="/dashboard" className="flex items-center gap-1 p-1 font-normal">
-          Dashboard
-        </a>
-      </Typography>
-      <Typography as="li" variant="small" color="blue-gray" className="capitalize">
-        <a href="/profile" className="flex items-center gap-1 p-1 font-normal">
-          Profile
-        </a>
-      </Typography>
-      {/* Add more navigation items here */}
-    </ul>
-  );
-
   return (
-    <Navbar className="p-3">
-      <div className="container mx-auto flex items-center justify-between text-blue-gray-900">
-        <a href="/">
-          <Typography variant="small" className="mr-4 ml-2 cursor-pointer py-1.5 font-bold">
-            My App
-          </Typography>
-        </a>
-        <div className="hidden lg:block">{navList}</div>
-        <Button
-          variant="gradient"
-          size="sm"
-          className="hidden lg:inline-block"
-          onClick={handleLogout}
-        >
-          Logout
-        </Button>
-        <IconButton
-          variant="text"
-          size="sm"
-          className="ml-auto text-inherit hover:bg-transparent focus:bg-transparent active:bg-transparent lg:hidden"
-          onClick={() => setOpenNav(!openNav)}
-        >
-          {openNav ? (
-            <XMarkIcon strokeWidth={2} className="h-6 w-6" />
-          ) : (
-            <Bars3Icon strokeWidth={2} className="h-6 w-6" />
-          )}
-        </IconButton>
-      </div>
-      <Collapse open={openNav}>
-        <div className="container mx-auto">
-          {navList}
-          <Button
-            variant="gradient"
-            size="sm"
-            className="w-full block lg:hidden"
-            onClick={handleLogout}
-          >
-            Logout
-          </Button>
+    <header className="flex flex-wrap sm:justify-start sm:flex-nowrap z-50 w-full bg-white border-b border-gray-200 text-sm py-11 sm:py-0 dark:bg-neutral-800 dark:border-neutral-700"> {/* Changed py-2 to py-4 */}
+      <nav className="relative max-w-[85rem] w-full mx-auto px-4 sm:flex sm:items-center sm:justify-between sm:px-6 lg:px-8" aria-label="Global">
+        <div className="flex items-center justify-between">
+          <a className="flex-none text-xl font-semibold dark:text-white" href="#" aria-label="Brand"></a>
+          <div className="sm:hidden">
+            <button type="button" className="hs-collapse-toggle size-9 flex justify-center items-center text-sm font-semibold rounded-lg border border-gray-200 text-gray-800 hover:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-white dark:border-neutral-700 dark:hover:bg-neutral-700" data-hs-collapse="#navbar-collapse-with-animation" aria-controls="navbar-collapse-with-animation" aria-label="Toggle navigation">
+              <svg className="hs-collapse-open:hidden flex-shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="18" y2="18"/></svg>
+              <svg className="hs-collapse-open:block hidden flex-shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </div>
         </div>
-      </Collapse>
-    </Navbar>
+        <div id="navbar-collapse-with-animation" className="hs-collapse hidden overflow-hidden transition-all duration-300 basis-full grow sm:block">
+          <div className="flex flex-col sm:flex-row sm:items-center py-2 md:py-0 sm:ps-7">
+            {/* Logout button */}
+            <div className="flex items-center gap-x-2 py-2 sm:py-0 sm:ms-auto">
+              <button onClick={handleLogout} className="flex items-center gap-x-2 font-medium text-gray-500 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-500">
+                <svg className="flex-shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Log out
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
   );
 };
 
-export default CustomNavbar;
+export default Navbar;

@@ -21,6 +21,7 @@ const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>(assets);
   const [searchQuery, setSearchQuery] = useState("");
+  const [duplicateCoordinates, setDuplicateCoordinates] = useState<string[]>([]);
 
   const getMarkerColor = (status: string): string => {
     switch (status) {
@@ -28,7 +29,7 @@ const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
         return "red";
       case "Major":
         return "orange";
-      case "Non-Critical":
+      case "Minor":
         return "green";
       default:
         return "blue";
@@ -94,7 +95,13 @@ const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
           `Adding marker for asset: ${asset.functional_location} with status: ${asset.status} and color: ${color}`
         );
 
-        if (lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90) {
+        if (
+          !duplicateCoordinates.includes(asset.functional_location) && // Check if the functional location is not in duplicateCoordinates
+          lng >= -180 &&
+          lng <= 180 &&
+          lat >= -90 &&
+          lat <= 90
+        ) {
           new maplibregl.Marker({ color })
             .setLngLat([lng, lat])
             .setPopup(
@@ -120,7 +127,26 @@ const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
         mapRef.current = null;
       }
     };
-  }, [filteredAssets]);
+  }, [filteredAssets, duplicateCoordinates]); // Include duplicateCoordinates in the dependency array
+
+  useEffect(() => {
+    const uniqueCoordinates: { [key: string]: string } = {};
+    const duplicates: string[] = [];
+
+    assets.forEach((asset) => {
+      const [lat, lng] = asset.coordinates;
+      const key = `${lat},${lng}`;
+
+      if (uniqueCoordinates[key]) {
+        duplicates.push(uniqueCoordinates[key]);
+        duplicates.push(asset.functional_location);
+      } else {
+        uniqueCoordinates[key] = asset.functional_location;
+      }
+    });
+
+    setDuplicateCoordinates(duplicates);
+  }, [assets]);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     const query = event.target.value.toLowerCase();
@@ -147,6 +173,18 @@ const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
           />
         </div>
       </div>
+      {duplicateCoordinates.length > 0 && (
+        <div className="absolute top-20 left-4 z-10 w-full max-w-md">
+          <div className="p-2 bg-white rounded-md shadow-md">
+            <h3>Duplicate Coordinates Found:</h3>
+            <ul>
+              {duplicateCoordinates.map((location, index) => (
+                <li key={index}>{location}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
