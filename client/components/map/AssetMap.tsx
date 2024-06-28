@@ -1,3 +1,4 @@
+// AssetMap.tsx
 import React, { useEffect, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -9,14 +10,15 @@ interface Asset {
   coordinates: [number, number];
   tev_us_in_db: number | null;
   hotspot_delta_t_in_c: number | null;
-  status: string; // Add status to the Asset interface
+  status: string;
 }
 
 interface AssetMapProps {
   assets: Asset[];
+  duplicateCoordinates: string[];
 }
 
-const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
+const AssetMap: React.FC<AssetMapProps> = ({ assets = [], duplicateCoordinates = [] }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
 
@@ -81,32 +83,30 @@ const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
       const markers = document.querySelectorAll(".mapboxgl-marker");
       markers.forEach((marker) => marker.remove());
 
-      assets.forEach((asset) => {
-        const [lat, lng] = asset.coordinates;
-        const color = getMarkerColor(asset.status);
+      assets
+        .filter((asset) => !duplicateCoordinates.includes(asset.functional_location))
+        .forEach((asset) => {
+          const [lat, lng] = asset.coordinates;
+          const color = getMarkerColor(asset.status);
 
-        console.log(
-          `Adding marker for asset: ${asset.functional_location} with status: ${asset.status} and color: ${color}`
-        );
-
-        if (lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90) {
-          new maplibregl.Marker({ color })
-            .setLngLat([lng, lat])
-            .setPopup(
-              new maplibregl.Popup({ offset: 25 }).setHTML(`
-                <h3>Functional Location: ${asset.functional_location}</h3>
-                <p>Substation Name: ${asset.substation_name}</p>
-                <p>Status: ${asset.status}</p>
-                <p>Coordinates: [${lng}, ${lat}]</p>
-              `)
-            )
-            .addTo(mapRef.current as maplibregl.Map);
-        } else {
-          console.error(
-            `Invalid coordinates for asset ${asset.functional_location}: [${lat}, ${lng}]`
-          );
-        }
-      });
+          if (lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90) {
+            new maplibregl.Marker({ color })
+              .setLngLat([lng, lat])
+              .setPopup(
+                new maplibregl.Popup({ offset: 25 }).setHTML(`
+                  <h3>Functional Location: ${asset.functional_location}</h3>
+                  <p>Substation Name: ${asset.substation_name}</p>
+                  <p>Status: ${asset.status}</p>
+                  <p>Coordinates: [${lng}, ${lat}]</p>
+                `)
+              )
+              .addTo(mapRef.current as maplibregl.Map);
+          } else {
+            console.error(
+              `Invalid coordinates for asset ${asset.functional_location}: [${lat}, ${lng}]`
+            );
+          }
+        });
     }
 
     return () => {
@@ -115,7 +115,7 @@ const AssetMap: React.FC<AssetMapProps> = ({ assets = [] }) => {
         mapRef.current = null;
       }
     };
-  }, [assets]);
+  }, [assets, duplicateCoordinates]);
 
   return <div ref={mapContainerRef} style={{ width: "100%", height: "500px" }} />;
 };

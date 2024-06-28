@@ -9,48 +9,98 @@ import MixedBarComposedChart from "@/components/MixedBarComposedChart";
 import ReportTable from "@/components/ReportTable";
 
 const monthNames = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
 const states = [
-  'Perak', 'Selangor', 'Pahang', 'Kelantan', 'Putrajaya', 'Johor', 'Kedah', 'Malacca',
-  'Negeri Sembilan', 'Penang', 'Sarawak', 'Perlis', 'Sabah', 'Terengganu', 'Kuala Lumpur'
+  "Perak",
+  "Selangor",
+  "Pahang",
+  "Kelantan",
+  "Putrajaya",
+  "Johor",
+  "Kedah",
+  "Malacca",
+  "Negeri Sembilan",
+  "Penang",
+  "Sarawak",
+  "Perlis",
+  "Sabah",
+  "Terengganu",
+  "Kuala Lumpur",
 ];
 
 interface DefectData {
   month: string;
-  total_defects: number;  // Add total_defects for the line chart
+  total_defects: number; // Add total_defects for the line chart
   [key: string]: number | string;
 }
 
 const GenerateReport = () => {
   const [data, setData] = useState<DefectData[]>([]);
-  const [defectDescription, setDefectDescription] = useState<string>("CORONA DISCHARGE");
-  const [year, setYear] = useState<number | undefined>(new Date().getFullYear());
+  const [defectDescription, setDefectDescription] =
+    useState<string>("CORONA DISCHARGE");
+  const [year, setYear] = useState<number | undefined>(
+    new Date().getFullYear()
+  );
   const [selectedStates, setSelectedStates] = useState<string[]>([]);
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [brandStatusText, setBrandStatusText] = useState("Critical");
+  const [currentTime, setCurrentTime] = useState<string>("");
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      const formattedDate = `${String(now.getDate()).padStart(2, "0")}/${String(
+        now.getMonth() + 1
+      ).padStart(2, "0")}/${now.getFullYear()}`;
+      const formattedTime = now.toLocaleTimeString();
+      setCurrentTime(`${formattedDate} ${formattedTime}`);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchData = async () => {
     try {
-      const response = await axios.get("http://localhost:8080/api/defect-analytics", {
-        params: {
-          defect_description_1: defectDescription,
-          year,
-          'states[]': selectedStates
+      const response = await axios.get(
+        "http://localhost:8080/api/defect-analytics",
+        {
+          params: {
+            defect_description_1: defectDescription,
+            year,
+            "states[]": selectedStates,
+          },
         }
-      });
+      );
 
       const formattedData = monthNames.map((month) => {
-        const monthData = response.data.data.filter(item => item.month === month);
+        const monthData = response.data.data.filter(
+          (item) => item.month === month
+        );
         const monthResult: DefectData = { month, total_defects: 0 };
 
         states.forEach((state) => {
-          const stateData = monthData.find(item => item.state === state);
-          monthResult[state] = stateData ? stateData.unique_functional_locations : 0;
-          monthResult.total_defects += stateData ? stateData.unique_functional_locations : 0;
+          const stateData = monthData.find((item) => item.state === state);
+          monthResult[state] = stateData
+            ? stateData.unique_functional_locations
+            : 0;
+          monthResult.total_defects += stateData
+            ? stateData.unique_functional_locations
+            : 0;
         });
 
         return monthResult;
@@ -66,7 +116,10 @@ const GenerateReport = () => {
     fetchData();
   }, []);
 
-  const availableYears = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i);
+  const availableYears = Array.from(
+    { length: 10 },
+    (_, i) => new Date().getFullYear() - i
+  );
 
   const handleStateChange = (state: string) => {
     setSelectedStates((prevSelectedStates) => {
@@ -82,7 +135,7 @@ const GenerateReport = () => {
     setDropdownOpen(!dropdownOpen);
   };
 
-  const filteredStates = states.filter((state) => 
+  const filteredStates = states.filter((state) =>
     state.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -106,8 +159,6 @@ const GenerateReport = () => {
     setBrandStatusText(` ${filterType}`);
   };
 
-  
-
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
@@ -119,6 +170,12 @@ const GenerateReport = () => {
         </Button>
       </div>
       <div ref={componentRef} className="space-y-6">
+        <Typography variant="h4" color="gray" className="mb-4">
+          Switchgear Report
+        </Typography>
+        <Typography variant="subtitle1" color="gray">
+          {currentTime}
+        </Typography>
         <div className="grid grid-cols-2 gap-6">
           <Card className="p-4">
             <Typography variant="h6" color="gray">
@@ -128,16 +185,19 @@ const GenerateReport = () => {
           </Card>
           <Card className="p-4">
             <Typography variant="h6" color="gray">
-            Switchgear Brand Status: {brandStatusText}
+              Switchgear Brand Status: {brandStatusText}
             </Typography>
-            <PieChartComponent  onFilterChange={handleFilterChange} brandStatusText={brandStatusText}/>
+            <PieChartComponent
+              onFilterChange={handleFilterChange}
+              brandStatusText={brandStatusText}
+            />
           </Card>
         </div>
         <Card className="p-4">
           <Typography variant="h6" color="gray">
             Defect Trend
           </Typography>
-          <MixedBarComposedChart 
+          <MixedBarComposedChart
             data={data}
             defectDescription={defectDescription}
             setDefectDescription={setDefectDescription}

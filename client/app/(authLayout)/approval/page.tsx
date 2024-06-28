@@ -24,8 +24,13 @@ const PendingApprovals = () => {
   const [currentAction, setCurrentAction] = useState("");
   const [currentId, setCurrentId] = useState(null);
   const [reason, setReason] = useState("");
+  const [reasonError, setReasonError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [notification, setNotification] = useState({
+    message: "",
+    type: "",
+  });
   const router = useRouter();
 
   useEffect(() => {
@@ -72,8 +77,16 @@ const PendingApprovals = () => {
       );
       fetchPendingApprovals();
       closeModal();
+      setNotification({
+        message: "Record approved successfully!",
+        type: "success",
+      });
     } catch (error) {
       console.error("Error approving record:", error);
+      setNotification({
+        message: "Error approving record.",
+        type: "error",
+      });
     }
   };
 
@@ -95,8 +108,16 @@ const PendingApprovals = () => {
       );
       fetchPendingApprovals();
       closeModal();
+      setNotification({
+        message: "Record rejected successfully!",
+        type: "success",
+      });
     } catch (error) {
       console.error("Error rejecting record:", error);
+      setNotification({
+        message: "Error rejecting record.",
+        type: "error",
+      });
     }
   };
 
@@ -109,9 +130,14 @@ const PendingApprovals = () => {
   const closeModal = () => {
     setShowModal(false);
     setReason("");
+    setReasonError("");
   };
 
   const handleAction = () => {
+    if (!reason) {
+      setReasonError("Reason is required.");
+      return;
+    }
     if (currentAction === "approve") {
       handleApprove(currentId, reason);
     } else if (currentAction === "reject") {
@@ -132,6 +158,18 @@ const PendingApprovals = () => {
           </Typography>
         </CardHeader>
         <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
+          {notification.message && (
+            <div
+              className={`fixed top-0 right-0 mt-4 mr-4 px-4 py-2 rounded shadow-lg ${
+                notification.type === "success"
+                  ? "bg-green-500"
+                  : "bg-red-500"
+              } text-white`}
+            >
+              <p>{notification.message}</p>
+            </div>
+          )}
+
           {pendingApprovals.length > 0 ? (
             <table className="w-full min-w-[640px] table-auto mt-4">
               <thead>
@@ -201,8 +239,6 @@ const PendingApprovals = () => {
                     <td className="py-3 px-5">{approval.defect_owner}</td>
                     <td className="py-3 px-5">
                       <div className="flex">
-                        {" "}
-                        {/* Wrap buttons in a flexbox container */}
                         <Button
                           onClick={() => openModal("approve", approval.id)}
                           variant="gradient"
@@ -248,7 +284,13 @@ const PendingApprovals = () => {
                 onChange={(e) => setReason(e.target.value)}
                 label="Reason"
                 placeholder="Enter reason"
+                error={!!reasonError}
               />
+              {reasonError && (
+                <Typography color="red" variant="small">
+                  {reasonError}
+                </Typography>
+              )}
             </DialogBody>
             <DialogFooter>
               <Button

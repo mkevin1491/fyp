@@ -270,6 +270,9 @@ def get_approval_logs():
         if filter_action != 'all':
             query = query.filter_by(action=filter_action)
 
+        # Order the results by timestamp in descending order
+        query = query.order_by(ApprovalLog.timestamp.desc())
+
         logs = query.paginate(page=page, per_page=per_page, error_out=False)
 
         approval_logs = []
@@ -291,6 +294,7 @@ def get_approval_logs():
     except Exception as e:
         logger.error(f"Error fetching approval logs: {e}")
         return jsonify({'error': str(e)}), 500
+
 
 @app.route("/api/switchgear-data", methods=['GET'])
 def get_switchgear_data():
@@ -387,7 +391,33 @@ def create_switchgear():
     except Exception as e:
         logger.error(f"Error creating switchgear record: {e}")
         return jsonify({'error': str(e)}), 500
+@app.route("/api/functional-locations", methods=['GET'])
+def get_functional_locations():
+    try:
+        # Query to get distinct functional locations with their statuses
+        query = db.session.query(
+            Switchgear.functional_location,
+            Switchgear.status
+        ).distinct().all()
 
+        # Process the query results
+        locations_data = []
+        for location, status in query:
+            location_info = next((item for item in locations_data if item['functional_location'] == location), None)
+            if location_info:
+                location_info['statuses'].append(status)
+            else:
+                locations_data.append({
+                    'functional_location': location,
+                    'statuses': [status]
+                })
+
+        return jsonify(locations_data)
+    except Exception as e:
+        logger.error(f"Error fetching functional locations: {e}")
+        return jsonify({'error': str(e)}), 500
+
+    
 @app.route("/api/switchgear-info", methods=['GET'])
 def get_switchgear_info():
     try:

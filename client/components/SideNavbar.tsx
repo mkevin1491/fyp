@@ -1,7 +1,4 @@
-// components/SideNavbar.tsx
-
 "use client";
-
 import { useState, useEffect } from "react";
 import { Nav } from "./ui/nav";
 import {
@@ -12,14 +9,17 @@ import {
   FileClock,
   LineChart,
   Trello,
-  Table2
+  Table2,
+  TrendingUp,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { io } from "socket.io-client";
 import {
   useMaterialTailwindController,
   setOpenSidenav,
 } from "./context";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function SideNavbar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -107,18 +107,40 @@ export default function SideNavbar() {
               icon: Upload,
               variant: "ghost",
             },
-            {
-              title: "Switchgear List",
-              href: "/switchgear_list",
-              icon: Table2,
-              variant: "ghost",
-            },
-            {
-              title: "Defect Analytic",
-              href: "/defect_analytic",
-              icon: LineChart,
-              variant: "default",
-            },
+          ]}
+        />
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="defect_analytic">
+            <AccordionTrigger className={cn(buttonVariants({ variant: "ghost", size: "sm", className: "flex items-center w-full text-left px-8 py-2 justify-between" }))}>
+              <div className="flex items-center">
+                <LineChart className="mr-2" />
+                <span>Defect Analytic</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pl-12">
+              <Nav
+                isCollapsed={isCollapsed}
+                links={[
+                  {
+                    title: "Switchgear List",
+                    href: "/switchgear_list",
+                    icon: Table2,
+                    variant: "ghost",
+                  },
+                  {
+                    title: "Defect Trend",
+                    href: "/defect_analytic",
+                    icon: TrendingUp,
+                    variant: "ghost",
+                  },
+                ]}
+              />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+        <Nav
+          isCollapsed={isCollapsed}
+          links={[
             {
               title: "Geographical Map",
               href: "/map",
