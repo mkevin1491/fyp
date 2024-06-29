@@ -47,6 +47,26 @@ class Switchgear(db.Model):
     status = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=malaysia_time)
     updated_at = db.Column(db.DateTime, default=malaysia_time, onupdate=malaysia_time)
+    
+    
+    def to_dict(self):
+            return {
+                'id': self.id,
+                'functional_location': self.functional_location,
+                'report_date': self.report_date.isoformat() if self.report_date else None,
+                'defect_from': self.defect_from,
+                'tev_us_in_db': self.tev_us_in_db,
+                'hotspot_delta_t_in_c': self.hotspot_delta_t_in_c,
+                'switchgear_type': self.switchgear_type,
+                'switchgear_brand': self.switchgear_brand,
+                'substation_name': self.substation_name,
+                'defect_description_1': self.defect_description_1,
+                'defect_description_2': self.defect_description_2,
+                'defect_owner': self.defect_owner,
+                'latitude': self.latitude,
+                'longitude': self.longitude,
+                'status': self.status
+            }
 
 class PendingSwitchgear(db.Model):
     __tablename__ = 'pending_switchgear'
@@ -79,3 +99,13 @@ class ApprovalLog(db.Model):
     timestamp = db.Column(db.DateTime, default=malaysia_time)
     user_id = db.Column(db.Integer, db.ForeignKey('Users.id'), nullable=False)
     user = db.relationship('User', backref=db.backref('approval_logs', lazy=True))
+
+class ActionLog(db.Model):
+    __tablename__ = 'action_log'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    action = db.Column(db.String(50))
+    message = db.Column(db.String(500))
+    data = db.Column(db.JSON)  # Store the whole row as JSON
+    timestamp = db.Column(db.DateTime, default=malaysia_time)
+    user_id = db.Column(db.Integer, db.ForeignKey('Users.id'), nullable=False)
+    user = db.relationship('User', backref=db.backref('action_logs', lazy=True))

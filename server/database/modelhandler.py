@@ -1,6 +1,6 @@
 import pandas as pd
 from . import db
-from .models import User, Switchgear, PendingSwitchgear, ApprovalLog
+from .models import User, Switchgear, PendingSwitchgear, ApprovalLog, ActionLog
 import logging
 
 logger = logging.getLogger(__name__)
@@ -188,3 +188,9 @@ def log_approval(action: str, message: str, functional_location: str, tev_us_in_
 
         approval_logs = ApprovalLog.query.all()
         logger.debug(f"Approval logs in DB: {[log.id for log in approval_logs]}")
+
+def log_action(action, message, data, user_id):
+    new_log = ActionLog(action=action, message=message, data=data, user_id=user_id)
+    db.session.add(new_log)
+    db.session.commit()
+

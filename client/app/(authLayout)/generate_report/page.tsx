@@ -7,6 +7,7 @@ import BarChartComponent from "@/components/BarChartComponent";
 import PieChartComponent from "@/components/PieChartComponent";
 import MixedBarComposedChart from "@/components/MixedBarComposedChart";
 import ReportTable from "@/components/ReportTable";
+import withAuth from "@/components/withAuth";
 
 const monthNames = [
   "Jan",
@@ -179,7 +180,7 @@ const GenerateReport = () => {
         <div className="grid grid-cols-2 gap-6">
           <Card className="p-4">
             <Typography variant="h6" color="gray">
-              Registered Switchgear
+            Defect Switchgear Reported
             </Typography>
             <BarChartComponent />
           </Card>
@@ -226,4 +227,4 @@ const GenerateReport = () => {
   );
 };
 
-export default GenerateReport;
+export default withAuth(GenerateReport);

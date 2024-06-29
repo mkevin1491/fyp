@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import {
   ComposedChart,
   Bar,
@@ -15,52 +15,17 @@ import {
 import { Select, Option, Button, Typography } from "@material-tailwind/react";
 
 const monthNames = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
+
 const states = [
-  "Perak",
-  "Selangor",
-  "Pahang",
-  "Kelantan",
-  "Putrajaya",
-  "Johor",
-  "Kedah",
-  "Malacca",
-  "Negeri Sembilan",
-  "Penang",
-  "Sarawak",
-  "Perlis",
-  "Sabah",
-  "Terengganu",
-  "Kuala Lumpur",
+  "Perak", "Selangor", "Pahang", "Kelantan", "Putrajaya", "Johor", "Kedah", "Malacca", 
+  "Negeri Sembilan", "Penang", "Sarawak", "Perlis", "Sabah", "Terengganu", "Kuala Lumpur",
 ];
+
 const stateColors = [
-  "#4CAF50",
-  "#2196F3",
-  "#FF5722",
-  "#673AB7",
-  "#795548",
-  "#E91E63",
-  "#009688",
-  "#FF9800",
-  "#CDDC39",
-  "#9C27B0",
-  "#FFC107",
-  "#607D8B",
-  "#FFEB3B",
-  "#00BCD4",
-  "#F44336",
+  "#4CAF50", "#2196F3", "#FF5722", "#673AB7", "#795548", "#E91E63", "#009688", 
+  "#FF9800", "#CDDC39", "#9C27B0", "#FFC107", "#607D8B", "#FFEB3B", "#00BCD4", "#F44336",
 ];
 
 interface DefectData {
@@ -78,11 +43,8 @@ interface MixedBarComposedChartProps {
   availableYears: number[];
   selectedStates: string[];
   handleStateChange: (state: string) => void;
-  dropdownOpen: boolean;
-  toggleDropdown: () => void;
   searchTerm: string;
   setSearchTerm: (value: string) => void;
-  filteredStates: string[];
   handleFilterButtonClick: () => void;
 }
 
@@ -95,13 +57,14 @@ const MixedBarComposedChart: React.FC<MixedBarComposedChartProps> = ({
   availableYears,
   selectedStates,
   handleStateChange,
-  dropdownOpen,
-  toggleDropdown,
   searchTerm,
   setSearchTerm,
-  filteredStates,
-  handleFilterButtonClick
+  handleFilterButtonClick,
 }) => {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
+  const filteredStates = states.filter((state) => state.toLowerCase().includes(searchTerm.toLowerCase()));
+
   return (
     <div>
       <div className="flex flex-wrap items-center mb-4">
@@ -132,57 +95,68 @@ const MixedBarComposedChart: React.FC<MixedBarComposedChartProps> = ({
           <Typography variant="small" className="mr-2 text-gray-500">
             States:
           </Typography>
-          <div className="relative">
-            <button 
-              id="dropdownSearchButton" 
-              onClick={toggleDropdown} 
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800" 
-              type="button"
-            >
-              Dropdown search 
-              <svg className="w-2.5 h-2.5 ms-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 4 4 4-4"/>
-              </svg>
-            </button>
-            {dropdownOpen && (
-              <div id="dropdownSearch" className="z-10 absolute bg-white rounded-lg shadow w-60 dark:bg-gray-700 mt-2">
-                <div className="p-3">
-                  <label htmlFor="input-group-search" className="sr-only">Search</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                      <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+          <div className="relative w-64">
+            <div className="flex flex-col items-center relative">
+              <div className="w-full">
+                <div className="my-2 p-1 flex border border-gray-200 bg-white rounded">
+                  <div className="flex flex-auto flex-wrap">
+                    {selectedStates.length === 0 ? (
+                      <div className="flex-1">
+                        <input 
+                          placeholder="Search state" 
+                          className="bg-transparent p-1 px-2 appearance-none outline-none h-full w-full text-gray-800" 
+                          value={searchTerm} 
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          onFocus={toggleDropdown}
+                        />
+                      </div>
+                    ) : (
+                      selectedStates.map((state) => (
+                        <div key={state} className="flex justify-center items-center m-1 font-medium py-1 px-2 bg-white rounded-full text-teal-700 bg-teal-100 border border-teal-300">
+                          <div className="text-xs font-normal leading-none max-w-full flex-initial">{state}</div>
+                          <div className="flex flex-auto flex-row-reverse">
+                            <div>
+                              <svg onClick={() => handleStateChange(state)} xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-x cursor-pointer hover:text-teal-400 rounded-full w-4 h-4 ml-2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <div className="text-gray-300 w-8 py-1 pl-2 pr-1 border-l flex items-center border-gray-200">
+                    <button className="cursor-pointer w-6 h-6 text-gray-600 outline-none focus:outline-none" onClick={toggleDropdown}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-chevron-up w-4 h-4">
+                        <polyline points="18 15 12 9 6 15"></polyline>
                       </svg>
-                    </div>
-                    <input 
-                      type="text" 
-                      id="input-group-search" 
-                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
-                      placeholder="Search state"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                    </button>
                   </div>
                 </div>
-                <ul className="h-48 px-3 pb-3 overflow-y-auto text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownSearchButton">
-                  {filteredStates.map((state) => (
-                    <li key={state}>
-                      <div className="flex items-center p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600">
-                        <input 
-                          id={`checkbox-item-${state}`} 
-                          type="checkbox" 
-                          value={state} 
-                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500" 
-                          checked={selectedStates.includes(state)}
-                          onChange={() => handleStateChange(state)}
-                        />
-                        <label htmlFor={`checkbox-item-${state}`} className="w-full ml-2 text-sm font-medium text-gray-900 rounded dark:text-gray-300">{state}</label>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
               </div>
-            )}
+              {dropdownOpen && (
+                <div className="absolute top-full mt-1 shadow bg-white z-40 w-full left-0 rounded max-h-select overflow-y-auto">
+                  <div className="flex flex-col w-full">
+                    {filteredStates.map((state) => (
+                      <div key={state} className="cursor-pointer w-full border-gray-100 border-b hover:bg-teal-100" onClick={() => handleStateChange(state)}>
+                        <div className="flex w-full items-center p-2 pl-2 border-transparent border-l-2 relative hover:border-teal-100">
+                          <div className="w-full items-center flex">
+                            <input
+                              type="checkbox"
+                              checked={selectedStates.includes(state)}
+                              onChange={() => handleStateChange(state)}
+                              className="form-checkbox h-4 w-4 text-teal-600 transition duration-150 ease-in-out"
+                            />
+                            <div className="mx-2 leading-6">{state}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex items-center">
@@ -199,12 +173,7 @@ const MixedBarComposedChart: React.FC<MixedBarComposedChartProps> = ({
           <Tooltip />
           <Legend />
           {states.map((state, index) => (
-            <Bar
-              key={state}
-              dataKey={state}
-              fill={stateColors[index]}
-              stackId="a"
-            >
+            <Bar key={state} dataKey={state} fill={stateColors[index]} stackId="a">
               <LabelList dataKey={state} position="top" />
             </Bar>
           ))}

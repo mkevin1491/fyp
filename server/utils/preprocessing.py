@@ -59,6 +59,9 @@ def preprocess_data(file_path):
         df['Report Date '] = pd.to_datetime(df['Report Date '], errors='coerce')
         df['TEV/US In DB'] = pd.to_numeric(df['TEV/US In DB'], errors='coerce')
         df['Hotspot ∆T In ⁰C'] = pd.to_numeric(df['Hotspot ∆T In ⁰C'], errors='coerce')
+        
+        # Strip whitespace from 'Defect From' column
+        df['Defect From'] = df['Defect From'].str.strip()
 
         # Geocode addresses and add latitude and longitude
         def geocode_with_context(row):

@@ -17,6 +17,10 @@ const withAuth = (WrappedComponent: React.ComponentType) => {
                     router.push('/login');
                     return;
                 }
+
+                // Set the token in default axios headers
+                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
                 try {
                     await axios.get('http://localhost:8080/auth/protected', {
                         headers: {

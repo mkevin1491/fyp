@@ -1,17 +1,19 @@
 from flask_socketio import SocketIO, emit
+from datetime import datetime  # Import datetime module
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 from flask_migrate import Migrate
 from config import Config
 from database import init_db, db
-from database.models import Switchgear, PendingSwitchgear, ApprovalLog, User
+from database.models import Switchgear, PendingSwitchgear, ApprovalLog, User, ActionLog
 from database.modelhandler import (
     add_pending_switchgear_record,
     add_switchgear_record,
     move_pending_to_approved,
     reject_pending,
     insert_switchgear_values,
+    log_action,
 )
 from utils.preprocessing import preprocess_data
 from auth.utils import jwt
@@ -52,6 +54,13 @@ migrate = Migrate(app, db)
 # Register the authentication blueprint
 from auth.routes import auth_bp
 app.register_blueprint(auth_bp, url_prefix='/auth')
+
+@app.route('/auth/protected', methods=['GET'])
+@jwt_required()
+def protected():
+    # Retrieve the identity of the current user with the token
+    current_user = get_jwt_identity()
+    return jsonify({"message": "User is authenticated", "user": current_user}), 200
 
 @app.route("/api/upload", methods=['POST'])
 def upload_file():
@@ -300,6 +309,41 @@ def get_approval_logs():
         logger.error(f"Error fetching approval logs: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/action-logs', methods=['GET'])
+@jwt_required()
+def get_action_logs():
+    try:
+        action = request.args.get('action')
+        query = ActionLog.query
+        
+        if action:
+            query = query.filter_by(action=action)
+        
+        logs = query.order_by(ActionLog.timestamp.desc()).all()
+        
+        logs_data = []
+        for log in logs:
+            log_data = {
+                'id': log.id,
+                'action': log.action,
+                'message': log.message,
+                'data': log.data,
+                'timestamp': log.timestamp,
+                'user_id': log.user_id,
+                'user': {
+                    'id': log.user.id,
+                    'username': log.user.name
+                }
+            }
+            logs_data.append(log_data)
+            logger.debug(f"Log data: {log_data}")
+        
+        return jsonify(logs_data), 200
+    except Exception as e:
+        logger.error(f"Error fetching action logs: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 
 @app.route("/api/switchgear-data", methods=['GET'])
 def get_switchgear_data():
@@ -504,9 +548,16 @@ def get_switchgear_info():
 def update_switchgear(id):
     try:
         data = request.json
+        reason = data.get('reason')  # Get the reason from the request
+        if not reason:
+            return jsonify({'error': 'Reason is required'}), 400
+        
         record = Switchgear.query.get(id)
         if not record:
             return jsonify({'error': 'Record not found'}), 404
+        
+        # Store the old data for logging
+        old_data = record.to_dict()
 
         record.functional_location = data.get('functional_location', record.functional_location)
         record.report_date = data.get('report_date', record.report_date)
@@ -524,26 +575,58 @@ def update_switchgear(id):
         record.status = data.get('status', record.status)
 
         db.session.commit()
+
+        # Convert datetime to string in old_data
+        for key, value in old_data.items():
+            if isinstance(value, datetime):
+                old_data[key] = value.isoformat()
+
+        # Log the action with the reason
+        user_id = get_jwt_identity()['id']
+        log_action('Edit', (
+                    f'Edited switchgear record with functional location {record.functional_location}. '
+                    f'Reason: {reason}'
+        ), old_data, user_id)
+
         return jsonify({'message': 'Switchgear record updated'}), 200
     except Exception as e:
         logger.error(f"Error updating switchgear record: {e}")
         return jsonify({'error': str(e)}), 500
+
+
     
-@app.route('/api/switchgear/<int:id>', methods=['POST', 'GET'])
-# @jwt_required()
+@app.route('/api/switchgear/<int:id>', methods=['DELETE'])
+@jwt_required(optional=True)
 def delete_switchgear(id):
     try:
+        data = request.json
+        reason = data.get('reason')  # Get the reason from the request
+        if not reason:
+            return jsonify({'error': 'Reason is required'}), 400
+        
         record = Switchgear.query.get(id)
         if not record:
             return jsonify({'error': 'Record not found'}), 404
 
+        # Store the data for logging
+        record_data = record.to_dict()  # Assuming to_dict() method exists to convert record to dict
+
         db.session.delete(record)
         db.session.commit()
+
+        # Log the action with the reason
+        user_id = get_jwt_identity()['id']
+        log_action('Delete', (
+                    f'Deleted switchgear record with functional location {record.functional_location}. \n'
+                    f'Reason: {reason}'
+        ), record_data, user_id)
+
         return jsonify({'message': 'Switchgear record deleted'}), 200
     except Exception as e:
         logger.error(f"Error deleting switchgear record: {e}")
         return jsonify({'error': str(e)}), 500
-    
+
+
 
 @app.route('/api/defect-analytics', methods=['GET'])
 def get_defect_analytics():

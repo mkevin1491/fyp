@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogHeader,
@@ -6,6 +6,8 @@ import {
   DialogFooter,
   Input,
   Button,
+  Select,
+  Option,
 } from "@material-tailwind/react";
 
 const CreateModal = ({ isOpen, onClose, onCreate }) => {
@@ -21,8 +23,14 @@ const CreateModal = ({ isOpen, onClose, onCreate }) => {
     defect_description_1: "",
     defect_description_2: "",
     defect_owner: "",
-    status: "",
   });
+  const [status, setStatus] = useState("Unknown");
+
+  useEffect(() => {
+    const { tev_us_in_db, hotspot_delta_t_in_c } = formData;
+    const newStatus = calculateStatus(tev_us_in_db, hotspot_delta_t_in_c);
+    setStatus(newStatus);
+  }, [formData.tev_us_in_db, formData.hotspot_delta_t_in_c]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -32,8 +40,54 @@ const CreateModal = ({ isOpen, onClose, onCreate }) => {
     });
   };
 
+  const handleDefectFromChange = (value) => {
+    setFormData({
+      ...formData,
+      defect_from: value,
+      tev_us_in_db: "",
+      hotspot_delta_t_in_c: "",
+    });
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const hours = String(date.getUTCHours()).padStart(2, "0");
+    const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+    const seconds = String(date.getUTCSeconds()).padStart(2, "0");
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  };
+
+  const renderDisabledInput = (label, value) => (
+    <Input
+      label={label}
+      name={label.toLowerCase().replace(/ /g, "_")}
+      value={value}
+      disabled
+    />
+  );
+
+  const calculateStatus = (tev_us_in_db, hotspot_delta_t_in_c) => {
+    if (tev_us_in_db >= 10 || hotspot_delta_t_in_c >= 10) {
+      return "Critical";
+    } else if (tev_us_in_db >= 5 || hotspot_delta_t_in_c >= 5) {
+      return "Major";
+    } else if (tev_us_in_db > 0 || hotspot_delta_t_in_c > 0) {
+      return "Minor";
+    } else {
+      return "Unknown";
+    }
+  };
+
   const handleConfirm = () => {
-    onCreate(formData);
+    const formattedData = {
+      ...formData,
+      report_date: formatDate(formData.report_date),
+      status: status,
+    };
+    onCreate(formattedData);
     onClose();
   };
 
@@ -51,27 +105,32 @@ const CreateModal = ({ isOpen, onClose, onCreate }) => {
           <Input
             label="Report Date"
             name="report_date"
-            type="datetime-local" // Use appropriate input type for date and time
+            type="datetime-local"
             value={formData.report_date}
             onChange={handleChange}
           />
-          <Input
+          <Select
             label="Defect From"
             name="defect_from"
             value={formData.defect_from}
-            onChange={handleChange}
-          />
+            onChange={handleDefectFromChange}
+          >
+            <Option value="ULTRASOUND">ULTRASOUND</Option>
+            <Option value="THERMOGRAPHY">THERMOGRAPHY</Option>
+          </Select>
           <Input
             label="TEV/US In DB"
             name="tev_us_in_db"
             value={formData.tev_us_in_db}
             onChange={handleChange}
+            disabled={formData.defect_from === "THERMOGRAPHY"}
           />
           <Input
             label="Hotspot ∆T In ⁰C"
             name="hotspot_delta_t_in_c"
             value={formData.hotspot_delta_t_in_c}
             onChange={handleChange}
+            disabled={formData.defect_from === "ULTRASOUND"}
           />
           <Input
             label="Switchgear Type"
@@ -112,8 +171,9 @@ const CreateModal = ({ isOpen, onClose, onCreate }) => {
           <Input
             label="Status"
             name="status"
-            value={formData.status}
+            value={status}
             onChange={handleChange}
+            disabled
           />
         </div>
       </DialogBody>

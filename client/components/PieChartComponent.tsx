@@ -2,7 +2,17 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
+const COLORS = [
+  "#0088FE", // Blue
+  "#00C49F", // Teal
+  "#FFBB28", // Yellow
+  "#FF8042", // Orange
+  "#7B68EE", // MediumPurple
+  "#FF4500", // OrangeRed
+  "#32CD32", // LimeGreen
+  "#BA55D3", // MediumOrchid
+  "#4169E1", // RoyalBlue
+];
 
 const PieChartComponent: React.FC<{ data: any[], brandStatusText: string, onFilterChange: (filterType: string) => void }> = ({ onFilterChange }) => {
 
@@ -52,7 +62,7 @@ const PieChartComponent: React.FC<{ data: any[], brandStatusText: string, onFilt
             cx="50%"
             cy="50%"
             labelLine={true}
-            label={(entry) => entry.name}
+            label={(entry) => `${entry.name} (${(entry.percent * 100).toFixed(2)}%)`} // Display name and percentage
             outerRadius={100}
             fill="#8884d8"
             dataKey="value"

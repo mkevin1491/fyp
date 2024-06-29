@@ -6,6 +6,7 @@ import {
   DialogFooter,
   Input,
   Button,
+  Select,
 } from "@material-tailwind/react";
 
 const EditModal = ({ isOpen, onClose, item, onConfirm }) => {
@@ -27,17 +28,27 @@ const EditModal = ({ isOpen, onClose, item, onConfirm }) => {
     });
   };
 
+  const handleDefectFromChange = (value) => {
+    setFormData({
+      ...formData,
+      defect_from: value,
+      // Reset the disabled fields when switching defect_from options
+      tev_us_in_db: "",
+      hotspot_delta_t_in_c: "",
+    });
+  };
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const year = date.getUTCFullYear();
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    const hours = String(date.getUTCHours()).padStart(2, '0');
-    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-    const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const hours = String(date.getUTCHours()).padStart(2, "0");
+    const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+    const seconds = String(date.getUTCSeconds()).padStart(2, "0");
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   };
-  
+
   // Function to render disabled input fields
   const renderDisabledInput = (label, value) => (
     <Input
@@ -48,8 +59,8 @@ const EditModal = ({ isOpen, onClose, item, onConfirm }) => {
     />
   );
 
-   // Function to calculate the status based on tev_us_in_db and hotspot_delta_t_in_c
-   const calculateStatus = (tev_us_in_db, hotspot_delta_t_in_c) => {
+  // Function to calculate the status based on tev_us_in_db and hotspot_delta_t_in_c
+  const calculateStatus = (tev_us_in_db, hotspot_delta_t_in_c) => {
     if (tev_us_in_db >= 10 || hotspot_delta_t_in_c >= 10) {
       return "Critical";
     } else if (tev_us_in_db >= 5 || hotspot_delta_t_in_c >= 5) {
@@ -66,7 +77,7 @@ const EditModal = ({ isOpen, onClose, item, onConfirm }) => {
     const formattedData = {
       ...formData,
       report_date: formatDate(formData.report_date),
-      status: status,  // Ensure status is included
+      status: status, // Ensure status is included
     };
     onConfirm(formattedData);
   };
@@ -79,23 +90,28 @@ const EditModal = ({ isOpen, onClose, item, onConfirm }) => {
           {renderDisabledInput("Functional Location", formData.functional_location)}
           {renderDisabledInput("Report Date", formData.report_date)}
 
-          <Input
+          <Select
             label="Defect From"
             name="defect_from"
             value={formData.defect_from}
-            onChange={handleChange}
-          />
+            onChange={(e) => handleDefectFromChange(e.target.value)}
+          >
+            <option value="ULTRASOUND">ULTRASOUND</option>
+            <option value="THERMOGRAPHY">THERMOGRAPHY</option>
+          </Select>
           <Input
             label="TEV/US In DB"
             name="tev_us_in_db"
             value={formData.tev_us_in_db}
             onChange={handleChange}
+            disabled={formData.defect_from === "THERMOGRAPHY"}
           />
           <Input
             label="Hotspot ∆T In ⁰C"
             name="hotspot_delta_t_in_c"
             value={formData.hotspot_delta_t_in_c}
             onChange={handleChange}
+            disabled={formData.defect_from === "ULTRASOUND"}
           />
           <Input
             label="Switchgear Type"
@@ -146,11 +162,7 @@ const EditModal = ({ isOpen, onClose, item, onConfirm }) => {
         <Button variant="text" color="red" onClick={onClose}>
           Cancel
         </Button>
-        <Button
-          variant="gradient"
-          color="blue"
-          onClick={handleConfirm}
-        >
+        <Button variant="gradient" color="blue" onClick={handleConfirm}>
           Confirm
         </Button>
       </DialogFooter>

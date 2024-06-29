@@ -100,22 +100,40 @@ const SwitchgearTable = () => {
   };
 
   const deleteRecord = async (id) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("Token is missing or invalid.");
+      setNotification({ message: "Authentication token missing.", type: "error" });
+      return;
+    }
+  
+    const reason = window.prompt("Please enter the reason for deletion:");
+    if (!reason) {
+      console.error("Reason is required for deletion.");
+      setNotification({ message: "Reason is required.", type: "error" });
+      return;
+    }
+  
+    if (!id) {
+      console.error("ID is missing for delete request.");
+      setNotification({ message: "Record ID is missing.", type: "error" });
+      return;
+    }
+  
     try {
-      const randomKey = "random-key-123"; // Replace with your random authorization key
-      const response = await fetch(
-        `http://localhost:8080/api/switchgear/${id}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${randomKey}`,
-          },
-        }
-      );
-
+      const response = await fetch(`http://localhost:8080/api/switchgear/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ reason }),  // Send the reason in the request body
+      });
+  
       if (!response.ok) {
         throw new Error("Failed to delete record");
       }
-
+  
       setNotification({ message: "Successfully deleted.", type: "success" });
       setTimeout(() => setNotification(null), 3000);
       fetchSwitchgearData(currentPage);
@@ -125,6 +143,8 @@ const SwitchgearTable = () => {
       setTimeout(() => setNotification(null), 3000);
     }
   };
+  
+  
 
   const handleEditClick = (item) => {
     setEditItem(item);
@@ -138,10 +158,16 @@ const SwitchgearTable = () => {
 
   const updateSwitchgearDetails = async (id, updatedData) => {
     const token = localStorage.getItem("token");
+    const reason = window.prompt("Please enter the reason for the edit:");
+    if (!reason) {
+      console.error("Reason is required for editing.");
+      throw new Error("Reason is required");
+    }
+  
     try {
       const response = await axios.put(
         `http://localhost:8080/api/switchgear/${id}`,
-        updatedData,
+        { ...updatedData, reason },  // Send the reason along with updated data
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -155,7 +181,7 @@ const SwitchgearTable = () => {
       throw error;
     }
   };
-
+  
   const handleConfirmEdit = async (updatedItem) => {
     try {
       const updatedResponse = await updateSwitchgearDetails(
@@ -163,14 +189,14 @@ const SwitchgearTable = () => {
         updatedItem
       );
       console.log("Update successful:", updatedResponse);
-
+  
       const updatedData = switchgearData.map((item) =>
         item.id === updatedItem.id ? updatedItem : item
       );
       setSwitchgearData(updatedData);
       setIsModalOpen(false);
       setEditItem(null);
-
+  
       setNotification({ message: "Successfully edited.", type: "success" });
       setTimeout(() => setNotification(null), 3000);
       fetchSwitchgearData(currentPage);
@@ -179,7 +205,7 @@ const SwitchgearTable = () => {
       setNotification({ message: "Error updating record.", type: "error" });
       setTimeout(() => setNotification(null), 3000);
     }
-  };
+  };  
 
   const handleCreate = async (formData) => {
     try {
@@ -192,12 +218,18 @@ const SwitchgearTable = () => {
       });
       if (response.ok) {
         console.log("Switchgear record created successfully!");
+  		setNotification({ message: "Successfully created.", type: "success" });
+        setTimeout(() => setNotification(null), 3000);
         fetchSwitchgearData(currentPage);
       } else {
         console.error("Failed to create switchgear record.");
+        setNotification({ message: "Error creating record.", type: "error" });
+        setTimeout(() => setNotification(null), 3000);
       }
     } catch (error) {
       console.error("Error creating switchgear record:", error);
+      setNotification({ message: "Error creating record.", type: "error" });
+      setTimeout(() => setNotification(null), 3000);
     }
   };
 
@@ -395,7 +427,7 @@ const SwitchgearTable = () => {
         <CreateModal
           isOpen={createModalOpen}
           onClose={() => setCreateModalOpen(false)}
-          onConfirm={handleCreate}
+          onCreate={handleCreate}
         />
       )}
     </div>

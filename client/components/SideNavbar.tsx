@@ -11,6 +11,7 @@ import {
   Trello,
   Table2,
   TrendingUp,
+  Captions,
 } from "lucide-react";
 import { io } from "socket.io-client";
 import {
@@ -164,6 +165,12 @@ export default function SideNavbar() {
               title: "Approval Log",
               href: "/approval_log",
               icon: FileClock,
+              variant: "ghost",
+            },
+            {
+              title: "Action Log",
+              href: "/action_log",
+              icon: Captions,
               variant: "ghost",
             },
           ]}

@@ -57,7 +57,7 @@ const BarChartComponent = () => {
     fetchData();
   }, [year, states]);
 
-  const availableYears = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i);
+  const availableYears = Array.from({ length: 4 }, (_, i) => new Date().getFullYear() - i);
 
   const handleStateChange = (state: string) => {
     setStates((prevSelectedStates) => {

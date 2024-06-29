@@ -2,6 +2,7 @@
 import React from "react";
 import SwitchgearTable from "@/components/SwitchgearTable";
 import { Card, CardHeader, CardBody, Typography } from "@material-tailwind/react";
+import withAuth from "@/components/withAuth";
 
 const SwitchgearList = () => {
   return (
@@ -20,4 +21,4 @@ const SwitchgearList = () => {
   );
 };
 
-export default SwitchgearList;
+export default withAuth(SwitchgearList);
