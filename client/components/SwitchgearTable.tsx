@@ -27,6 +27,7 @@ const SwitchgearTable = () => {
   const [editItem, setEditItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false); // State for modal
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [notification, setNotification] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
   const router = useRouter();
 
@@ -115,10 +116,13 @@ const SwitchgearTable = () => {
         throw new Error("Failed to delete record");
       }
 
-      console.log("Record deleted successfully");
-      return response.json();
+      setNotification({ message: "Successfully deleted.", type: "success" });
+      setTimeout(() => setNotification(null), 3000);
+      fetchSwitchgearData(currentPage);
     } catch (error) {
       console.error("Error deleting record:", error);
+      setNotification({ message: "Error deleting record.", type: "error" });
+      setTimeout(() => setNotification(null), 3000);
     }
   };
 
@@ -166,8 +170,14 @@ const SwitchgearTable = () => {
       setSwitchgearData(updatedData);
       setIsModalOpen(false);
       setEditItem(null);
+
+      setNotification({ message: "Successfully edited.", type: "success" });
+      setTimeout(() => setNotification(null), 3000);
+      fetchSwitchgearData(currentPage);
     } catch (error) {
       console.error("Failed to update switchgear details:", error);
+      setNotification({ message: "Error updating record.", type: "error" });
+      setTimeout(() => setNotification(null), 3000);
     }
   };
 
@@ -182,6 +192,7 @@ const SwitchgearTable = () => {
       });
       if (response.ok) {
         console.log("Switchgear record created successfully!");
+        fetchSwitchgearData(currentPage);
       } else {
         console.error("Failed to create switchgear record.");
       }
@@ -214,6 +225,19 @@ const SwitchgearTable = () => {
 
   return (
     <div>
+      {notification && (
+        <div
+          className={`fixed top-0 right-0 mt-4 mr-4 px-4 py-2 rounded shadow-lg ${
+            notification.type === "success"
+              ? "bg-green-500"
+              : notification.type === "info"
+              ? "bg-blue-500"
+              : "bg-red-500"
+          } text-white`}
+        >
+          <p>{notification.message}</p>
+        </div>
+      )}
       <div className="p-6 bg-white rounded-t-lg">
         <Typography variant="h6" color="blue-gray" className="mb-1">
           Switchgear Table
