@@ -72,6 +72,8 @@ def upload_file():
                 data = data.replace({np.nan: None})
 
                 new_pending_added = False
+                new_switchgear_added = False
+                duplicates_found = False
 
                 for index, row in data.iterrows():
                     logger.debug(f"Processing row {index}: {row.to_dict()}")
@@ -79,17 +81,14 @@ def upload_file():
                     report_date = row['Report Date ']
                     defect_description_1 = row['Defect Description 1']
 
-                    # Check if the functional location exists in the Switchgear table
                     existing_switchgear_records = Switchgear.query.filter_by(
                         functional_location=functional_location
                     ).all()
 
-                    # Check if the functional location exists in the PendingSwitchgear table
                     existing_pending_records = PendingSwitchgear.query.filter_by(
                         functional_location=functional_location
                     ).all()
 
-                    # Function to check for exact match of a record
                     def is_exact_match(record, row):
                         return (
                             record.report_date == report_date and
@@ -108,14 +107,13 @@ def upload_file():
                     match_found_in_pending = any(is_exact_match(rec, row) for rec in existing_pending_records)
 
                     if match_found_in_switchgear or match_found_in_pending:
-                        # Record is exactly the same in either table, ignore it
                         logger.debug(f"Ignored duplicate data: {row.to_dict()}")
+                        duplicates_found = True
                         continue
 
                     match_found = False
                     for existing_record in existing_switchgear_records:
                         if existing_record.report_date == report_date and existing_record.defect_description_1 == defect_description_1:
-                            # Record exists with the same report date and defect description, but data is different
                             add_pending_switchgear_record(row.to_dict())
                             logger.debug(f"Pending approval for updated values: {row.to_dict()}")
                             new_pending_added = True
@@ -123,17 +121,23 @@ def upload_file():
                             break
 
                     if not match_found:
-                        # If no matching report date and defect description, add to Switchgear
                         add_switchgear_record(row.to_dict())
                         logger.debug(f"Added new record for different report date for {functional_location}")
+                        new_switchgear_added = True
 
-                if not new_pending_added:
-                    return jsonify({'message': 'No new records were added to pending switchgear. All records are already in the approval page or added to switchgear.'})
+                if new_switchgear_added and not new_pending_added:
+                    message = 'Data successfully added to the switchgear table.'
+                elif new_switchgear_added and new_pending_added:
+                    message = 'Data added to the switchgear table and pending switchgear table for approval.'
+                elif new_pending_added and not new_switchgear_added:
+                    message = 'Data added to the pending switchgear table for approval.'
+                elif duplicates_found:
+                    message = 'All records are duplicates and already exist.'
 
                 count = db.session.query(PendingSwitchgear).count()
                 socketio.emit('update_pending_approvals_count', {'count': count})
 
-                return jsonify({'message': 'File uploaded. Records processed accordingly.'})
+                return jsonify({'message': message})
             except Exception as e:
                 logger.error(f"Error processing file: {e}")
                 return jsonify({'error': str(e)}), 500
@@ -147,6 +151,7 @@ def upload_file():
     except Exception as e:
         logger.error(f"Error during file upload: {e}")
         return jsonify({'error': str(e)}), 500
+
 
 @app.route("/api/pending-approvals", methods=['GET'])
 def get_pending_approvals():
@@ -307,7 +312,7 @@ def get_switchgear_data():
         query = db.session.query(Switchgear)
 
         if year:
-            query = query.filter(func.year(Switchgear.created_at) == year)
+            query = query.filter(func.year(Switchgear.report_date) == year)
 
         if selected_states:
             state_initials = [k for k, v in state_map.items() if v in selected_states]

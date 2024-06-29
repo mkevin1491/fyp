@@ -22,6 +22,8 @@ const UploadPage = () => {
     message: string;
     type: "success" | "error" | "info";
   } | null>(null);
+  const [isDragging, setIsDragging] = useState(false); // New state to track dragging status
+  const [isLoading, setIsLoading] = useState(false); // New state for loading animation
   const router = useRouter();
 
   const parseExcelData = (arrayBuffer: ArrayBuffer) => {
@@ -56,6 +58,8 @@ const UploadPage = () => {
       setTimeout(() => setNotification(null), 3000);
       return;
     }
+
+    setIsLoading(true); // Start loading animation
 
     try {
       const token = localStorage.getItem("token");
@@ -126,7 +130,7 @@ const UploadPage = () => {
           setMessage(message);
           setError(null);
           setNotification({
-            message: "Upload successful! Please go to the approval page.",
+            message: message, // Use the message from the backend directly
             type: "success",
           });
         }
@@ -141,6 +145,8 @@ const UploadPage = () => {
         type: "error",
       });
       setTimeout(() => setNotification(null), 3000); // Hide notification after 3 seconds
+    } finally {
+      setIsLoading(false); // Stop loading animation
     }
   };
 
@@ -176,6 +182,7 @@ const UploadPage = () => {
     (event: React.DragEvent<HTMLDivElement>) => {
       event.preventDefault();
       event.stopPropagation();
+      setIsDragging(false); // Set isDragging to false when a file is dropped
 
       const files = event.dataTransfer.files;
       setMessage(null); // Clear previous message
@@ -206,6 +213,13 @@ const UploadPage = () => {
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
+    setIsDragging(true); // Set isDragging to true when a file is dragged over
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(false); // Set isDragging to false when a file is dragged away
   };
 
   const handleRemoveFile = (index: number) => {
@@ -241,9 +255,12 @@ const UploadPage = () => {
           )}
 
           <div
-            className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
+            className={`flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600 ${
+              isDragging ? "border-blue-400 border-dotted" : ""
+            }`}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave} // Add handleDragLeave to handle drag leave event
           >
             <input
               id="dropzone-file"
@@ -270,7 +287,7 @@ const UploadPage = () => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth="2"
-                    d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
+                    d="M13 13h3a3 3 0 0 0 3-3V3a3 3 0 0 0-3-3H4a3 3 0 0 0-3 3v7a3 3 0 0 0 3 3h3m6 0-3-3m0 0-3 3m3-3v9"
                   />
                 </svg>
                 <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
@@ -278,39 +295,90 @@ const UploadPage = () => {
                   and drop
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  CSV or Excel files only
+                  CSV, XLS, or XLSX
                 </p>
               </div>
             </label>
           </div>
-
+          <Button
+            color="blue-gray"
+            variant="gradient"
+            fullWidth
+            className="mt-4"
+            onClick={handleUpload}
+            disabled={isLoading} // Disable button while loading
+          >
+            {isLoading ? (
+              <svg
+                className="animate-spin h-5 w-5 text-white mx-auto"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.963 7.963 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            ) : (
+              "Upload"
+            )}
+          </Button>
           {selectedFiles.length > 0 && (
             <div className="mt-4">
               {selectedFiles.map((file, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between items-center mb-2"
-                >
-                  <p className="text-sm text-gray-500">{file.name}</p>
-                  <button
-                    onClick={() => handleRemoveFile(index)}
-                    className="text-red-600 hover:underline"
-                  >
-                    Remove
-                  </button>
+                <div key={index} className="mb-2">
+                  <div className="mb-2 flex justify-between items-center">
+                    <div className="flex items-center gap-x-3">
+                      <div>
+                        <p className="text-sm font-medium text-gray-800 dark:text-white">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-neutral-500">
+                          {Math.round(file.size / 1024)} KB
+                        </p>
+                      </div>
+                    </div>
+                    <div className="inline-flex items-center gap-x-2">
+                      <a
+                        className="text-gray-500 hover:text-gray-800 dark:text-neutral-500 dark:hover:text-neutral-200"
+                        href="#"
+                        onClick={() => handleRemoveFile(index)}
+                      >
+                        <svg
+                          className="flex-shrink-0 size-4"
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M3 6h18"></path>
+                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                          <line x1="10" x2="10" y1="11" y2="17"></line>
+                          <line x1="14" x2="14" y1="11" y2="17"></line>
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
           )}
-
-          <Button
-            onClick={handleUpload}
-            className="mt-4"
-            variant="gradient"
-            color="blue"
-          >
-            Upload
-          </Button>
         </CardBody>
       </Card>
     </div>
