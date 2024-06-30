@@ -11,3 +11,4 @@ pytz
 Werkzeug==3.0.2
 pandas==2.2.2
 numpy
+requests==2.32.2
