@@ -634,7 +634,7 @@ def delete_switchgear(id):
 
 @app.route('/api/defect-analytics', methods=['GET'])
 def get_defect_analytics():
-    defect_description = request.args.get('defect_description_1', default=None, type=str)
+    defect_descriptions = request.args.getlist('defect_descriptions[]')
     year = request.args.get('year', default=None, type=int)
     selected_states = request.args.getlist('states[]')
 
@@ -644,9 +644,8 @@ def get_defect_analytics():
         func.count(func.distinct(Switchgear.functional_location)).label('unique_functional_locations')
     )
 
-    if defect_description:
-        # Determine the matching criteria based on input defect_description_1
-        query = query.filter(Switchgear.defect_description_1.ilike(defect_description))
+    if defect_descriptions:
+        query = query.filter(Switchgear.defect_description_1.in_(defect_descriptions))
 
     if year:
         query = query.filter(func.year(Switchgear.report_date) == year)
@@ -670,6 +669,7 @@ def get_defect_analytics():
     ]
 
     return jsonify({'data': result})
+
 
 if __name__ == "__main__":
     socketio.run(app, debug=True, port=8080)

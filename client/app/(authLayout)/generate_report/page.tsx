@@ -10,64 +10,36 @@ import ReportTable from "@/components/ReportTable";
 import withAuth from "@/components/withAuth";
 
 const monthNames = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 ];
+
 const states = [
-  "Perak",
-  "Selangor",
-  "Pahang",
-  "Kelantan",
-  "Putrajaya",
-  "Johor",
-  "Kedah",
-  "Malacca",
-  "Negeri Sembilan",
-  "Penang",
-  "Sarawak",
-  "Perlis",
-  "Sabah",
-  "Terengganu",
-  "Kuala Lumpur",
+  "Perak", "Selangor", "Pahang", "Kelantan", "Putrajaya", "Johor", "Kedah",
+  "Malacca", "Negeri Sembilan", "Penang", "Sarawak", "Perlis", "Sabah", 
+  "Terengganu", "Kuala Lumpur"
 ];
 
 interface DefectData {
   month: string;
-  total_defects: number; // Add total_defects for the line chart
+  total_defects: number;
   [key: string]: number | string;
 }
 
 const GenerateReport = () => {
   const [data, setData] = useState<DefectData[]>([]);
-  const [defectDescription, setDefectDescription] =
-    useState<string>("CORONA DISCHARGE");
-  const [year, setYear] = useState<number | undefined>(
-    new Date().getFullYear()
-  );
+  const [defectDescriptions, setDefectDescriptions] = useState<string[]>([]);
+  const [year, setYear] = useState<number | undefined>(new Date().getFullYear());
   const [selectedStates, setSelectedStates] = useState<string[]>([]);
-  const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [brandStatusText, setBrandStatusText] = useState("Critical");
   const [currentTime, setCurrentTime] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
-      const formattedDate = `${String(now.getDate()).padStart(2, "0")}/${String(
-        now.getMonth() + 1
-      ).padStart(2, "0")}/${now.getFullYear()}`;
+      const formattedDate = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
       const formattedTime = now.toLocaleTimeString();
       setCurrentTime(`${formattedDate} ${formattedTime}`);
     }, 1000);
@@ -81,7 +53,7 @@ const GenerateReport = () => {
         "http://localhost:8080/api/defect-analytics",
         {
           params: {
-            defect_description_1: defectDescription,
+            "defect_descriptions[]": defectDescriptions,
             year,
             "states[]": selectedStates,
           },
@@ -89,19 +61,13 @@ const GenerateReport = () => {
       );
 
       const formattedData = monthNames.map((month) => {
-        const monthData = response.data.data.filter(
-          (item) => item.month === month
-        );
+        const monthData = response.data.data.filter((item) => item.month === month);
         const monthResult: DefectData = { month, total_defects: 0 };
 
         states.forEach((state) => {
           const stateData = monthData.find((item) => item.state === state);
-          monthResult[state] = stateData
-            ? stateData.unique_functional_locations
-            : 0;
-          monthResult.total_defects += stateData
-            ? stateData.unique_functional_locations
-            : 0;
+          monthResult[state] = stateData ? stateData.unique_functional_locations : 0;
+          monthResult.total_defects += stateData ? stateData.unique_functional_locations : 0;
         });
 
         return monthResult;
@@ -117,10 +83,7 @@ const GenerateReport = () => {
     fetchData();
   }, []);
 
-  const availableYears = Array.from(
-    { length: 10 },
-    (_, i) => new Date().getFullYear() - i
-  );
+  const availableYears = Array.from({ length: 4 }, (_, i) => new Date().getFullYear() - i);
 
   const handleStateChange = (state: string) => {
     setSelectedStates((prevSelectedStates) => {
@@ -132,13 +95,9 @@ const GenerateReport = () => {
     });
   };
 
-  const toggleDropdown = () => {
-    setDropdownOpen(!dropdownOpen);
+  const handleFilterButtonClick = () => {
+    fetchData();
   };
-
-  const filteredStates = states.filter((state) =>
-    state.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const componentRef = useRef();
 
@@ -180,7 +139,7 @@ const GenerateReport = () => {
         <div className="grid grid-cols-2 gap-6">
           <Card className="p-4">
             <Typography variant="h6" color="gray">
-            Defect Switchgear Reported
+              Defect Switchgear Reported
             </Typography>
             <BarChartComponent />
           </Card>
@@ -200,19 +159,14 @@ const GenerateReport = () => {
           </Typography>
           <MixedBarComposedChart
             data={data}
-            defectDescription={defectDescription}
-            setDefectDescription={setDefectDescription}
+            defectDescriptions={defectDescriptions}
+            setDefectDescriptions={setDefectDescriptions}
             year={year}
             setYear={setYear}
             availableYears={availableYears}
             selectedStates={selectedStates}
             handleStateChange={handleStateChange}
-            dropdownOpen={dropdownOpen}
-            toggleDropdown={toggleDropdown}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            filteredStates={filteredStates}
-            handleFilterButtonClick={fetchData}
+            handleFilterButtonClick={handleFilterButtonClick}
           />
         </Card>
         <Card className="p-4">

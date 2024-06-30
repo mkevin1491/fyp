@@ -51,13 +51,11 @@ interface DefectData {
 
 const DefectAnalytics: React.FC = () => {
   const [data, setData] = useState<DefectData[]>([]);
-  const [defectDescription, setDefectDescription] =
-    useState<string>("CORONA DISCHARGE");
+  const [defectDescriptions, setDefectDescriptions] = useState<string[]>([]);
   const [year, setYear] = useState<number | undefined>(
     new Date().getFullYear()
   );
   const [selectedStates, setSelectedStates] = useState<string[]>([]);
-  const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   const fetchData = async () => {
@@ -66,7 +64,7 @@ const DefectAnalytics: React.FC = () => {
         "http://localhost:8080/api/defect-analytics",
         {
           params: {
-            defect_description_1: defectDescription,
+            "defect_descriptions[]": defectDescriptions,
             year,
             "states[]": selectedStates,
           },
@@ -117,13 +115,9 @@ const DefectAnalytics: React.FC = () => {
     });
   };
 
-  const toggleDropdown = () => {
-    setDropdownOpen(!dropdownOpen);
+  const handleFilterButtonClick = () => {
+    fetchData();
   };
-
-  const filteredStates = states.filter((state) =>
-    state.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
     <div className="mt-12 mb-8 flex flex-col gap-12">
@@ -138,19 +132,16 @@ const DefectAnalytics: React.FC = () => {
             <div className="w-full h-full">
               <MixedBarComposedChart
                 data={data}
-                defectDescription={defectDescription}
-                setDefectDescription={setDefectDescription}
+                defectDescriptions={defectDescriptions}
+                setDefectDescriptions={setDefectDescriptions}
                 year={year}
                 setYear={setYear}
                 availableYears={availableYears}
                 selectedStates={selectedStates}
                 handleStateChange={handleStateChange}
-                dropdownOpen={dropdownOpen}
-                toggleDropdown={toggleDropdown}
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
-                filteredStates={filteredStates}
-                handleFilterButtonClick={fetchData}
+                handleFilterButtonClick={handleFilterButtonClick}
               />
             </div>
           </div>
