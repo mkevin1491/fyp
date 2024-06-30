@@ -37,7 +37,7 @@ const ApprovalLogPage = () => {
       }
 
       const logsResponse = await axios.get(
-        `http://127.0.0.1:8080/api/approval-logs?filter=${filter}&page=${currentPage}&per_page=10`,
+        `https://sea-lion-app-3l29g.ondigitalocean.app/api/approval-logs?filter=${filter}&page=${currentPage}&per_page=10`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

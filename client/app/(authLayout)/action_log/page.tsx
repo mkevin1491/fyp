@@ -37,7 +37,7 @@ const LogsPage = () => {
       }
 
       const logsResponse = await axios.get(
-        `http://127.0.0.1:8080/api/action-logs?action=${filter === "all" ? "" : filter}&page=${currentPage}&per_page=10`,
+        `https://sea-lion-app-3l29g.ondigitalocean.app/api/action-logs?action=${filter === "all" ? "" : filter}&page=${currentPage}&per_page=10`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

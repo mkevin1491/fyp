@@ -36,7 +36,7 @@ export default function SideNavbar() {
 
   useEffect(() => {
     setMounted(true);
-    const socket = io("http://127.0.0.1:8080");
+    const socket = io("https://sea-lion-app-3l29g.ondigitalocean.app");
 
     socket.on("connect", () => {
       console.log("Connected to WebSocket server");
@@ -57,7 +57,7 @@ export default function SideNavbar() {
   const fetchPendingApprovalCount = async () => {
     try {
       const response = await fetch(
-        "http://127.0.0.1:8080/api/pending-approvals/count"
+        "https://sea-lion-app-3l29g.ondigitalocean.app/api/pending-approvals/count"
       );
       const data = await response.json();
       setPendingApprovalCount(data.count);
@@ -96,7 +96,7 @@ export default function SideNavbar() {
     if (token) {
       try {
         await axios.post(
-          "http://localhost:8080/auth/logout",
+          "https://sea-lion-app-3l29g.ondigitalocean.app/auth/logout",
           {},
           {
             headers: {

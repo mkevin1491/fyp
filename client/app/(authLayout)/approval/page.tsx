@@ -45,7 +45,7 @@ const PendingApprovals = () => {
         return;
       }
       const response = await axios.get(
-        `http://127.0.0.1:8080/api/pending-approvals?page=${currentPage}&per_page=10`,
+        `https://sea-lion-app-3l29g.ondigitalocean.app/api/pending-approvals?page=${currentPage}&per_page=10`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -67,7 +67,7 @@ const PendingApprovals = () => {
         return;
       }
       await axios.post(
-        `http://127.0.0.1:8080/api/approve/${id}`,
+        `https://sea-lion-app-3l29g.ondigitalocean.app/api/approve/${id}`,
         { message: reason },
         {
           headers: {
@@ -98,7 +98,7 @@ const PendingApprovals = () => {
         return;
       }
       await axios.post(
-        `http://127.0.0.1:8080/api/reject/${id}`,
+        `https://sea-lion-app-3l29g.ondigitalocean.app/api/reject/${id}`,
         { message: reason },
         {
           headers: {

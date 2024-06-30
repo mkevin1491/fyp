@@ -37,7 +37,7 @@ const DashboardPage = () => {
       }
       try {
         const response = await axios.get(
-          "http://localhost:8080/auth/protected",
+          "https://sea-lion-app-3l29g.ondigitalocean.app/auth/protected",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -53,7 +53,7 @@ const DashboardPage = () => {
 
     const fetchFunctionalLocations = async () => {
       try {
-        const response = await axios.get("http://localhost:8080/api/functional-locations");
+        const response = await axios.get("https://sea-lion-app-3l29g.ondigitalocean.app/api/functional-locations");
         const data = response.data;
         setFunctionalLocations(data);
 

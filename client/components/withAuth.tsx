@@ -22,7 +22,7 @@ const withAuth = (WrappedComponent: React.ComponentType) => {
                 axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
                 try {
-                    await axios.get('http://localhost:8080/auth/protected', {
+                    await axios.get('https://sea-lion-app-3l29g.ondigitalocean.app/auth/protected', {
                         headers: {
                             Authorization: `Bearer ${token}`,
                         },

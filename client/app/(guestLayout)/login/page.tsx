@@ -18,7 +18,7 @@ const LoginPage = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8080/auth/login",
+        "https://sea-lion-app-3l29g.ondigitalocean.app/auth/login",
         { email, password },
         {
           headers: {

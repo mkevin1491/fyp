@@ -11,7 +11,7 @@ export default function Home() {
 
   const fetchData = async () => {
     try {
-      const result = await axios("http://127.0.0.1:8080/api/user");
+      const result = await axios("https://sea-lion-app-3l29g.ondigitalocean.app/api/user");
       console.log(result.data);
       setUSerData(result.data.name);
     } catch (err) {

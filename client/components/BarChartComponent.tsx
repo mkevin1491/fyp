@@ -32,7 +32,7 @@ const BarChartComponent = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get("http://localhost:8080/api/switchgear-data", {
+      const response = await axios.get("https://sea-lion-app-3l29g.ondigitalocean.app/api/switchgear-data", {
         params: {
           year: year,
           'states[]': selectedStates

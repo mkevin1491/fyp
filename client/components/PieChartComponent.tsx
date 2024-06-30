@@ -23,7 +23,7 @@ const PieChartComponent: React.FC<{ data: any[], brandStatusText: string, onFilt
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8080/api/pie-chart?criticality=${criticality}`
+          `https://sea-lion-app-3l29g.ondigitalocean.app/api/pie-chart?criticality=${criticality}`
         );
         const brandData = response.data.data.map((item: any) => ({
           name: item.switchgear_brand,

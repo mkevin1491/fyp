@@ -95,7 +95,7 @@ const UploadPage = () => {
         const formData = new FormData();
         formData.append("file", file);
         const response = await axios.post(
-          "http://127.0.0.1:8080/api/upload",
+          "https://sea-lion-app-3l29g.ondigitalocean.app/api/upload",
           formData,
           {
             headers: {

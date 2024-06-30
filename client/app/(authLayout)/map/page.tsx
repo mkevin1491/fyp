@@ -28,7 +28,7 @@ const MapPage = () => {
       }
       try {
         const response = await axios.get(
-          "http://localhost:8080/auth/protected",
+          "https://sea-lion-app-3l29g.ondigitalocean.app/auth/protected",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -45,7 +45,7 @@ const MapPage = () => {
     const fetchAssets = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:8080/api/switchgear-info"
+          "https://sea-lion-app-3l29g.ondigitalocean.app/api/switchgear-info"
         );
         setAssets(response.data.data);
       } catch (error) {

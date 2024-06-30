@@ -37,7 +37,7 @@ const SwitchgearTable = () => {
   const fetchSwitchgearData = async (page = 1) => {
     try {
       const response = await axios.get(
-        `http://localhost:8080/api/switchgear-info?page=${page}&per_page=25`
+        `https://sea-lion-app-3l29g.ondigitalocean.app/api/switchgear-info?page=${page}&per_page=25`
       );
       const data = response.data.data;
       setSwitchgearData(data);
@@ -102,7 +102,7 @@ const SwitchgearTable = () => {
     try {
       const randomKey = "random-key-123"; // Replace with your random authorization key
       const response = await fetch(
-        `http://localhost:8080/api/switchgear/${id}`,
+        `https://sea-lion-app-3l29g.ondigitalocean.app/api/switchgear/${id}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -136,7 +136,7 @@ const SwitchgearTable = () => {
     const token = localStorage.getItem("token");
     try {
       const response = await axios.put(
-        `http://localhost:8080/api/switchgear/${id}`,
+        `https://sea-lion-app-3l29g.ondigitalocean.app/api/switchgear/${id}`,
         updatedData,
         {
           headers: {
@@ -173,7 +173,7 @@ const SwitchgearTable = () => {
 
   const handleCreate = async (formData) => {
     try {
-      const response = await fetch("http://localhost:8080/api/switchgear", {
+      const response = await fetch("https://sea-lion-app-3l29g.ondigitalocean.app/api/switchgear", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

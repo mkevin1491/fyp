@@ -62,14 +62,14 @@ const SwitchgearModal = ({ isOpen, onClose, switchgear, onSave }) => {
       if (switchgear) {
         // Update existing switchgear
         await axios.put(
-          `http://localhost:8080/api/switchgear-info/${switchgear.id}`,
+          `https://sea-lion-app-3l29g.ondigitalocean.app/api/switchgear-info/${switchgear.id}`,
           formData,
           config
         );
       } else {
         // Create new switchgear
         await axios.post(
-          "http://localhost:8080/api/switchgear-info",
+          "https://sea-lion-app-3l29g.ondigitalocean.app/api/switchgear-info",
           formData,
           config
         );

@@ -11,7 +11,7 @@ const Navbar = () => {
     if (token) {
       try {
         await axios.post(
-          "http://localhost:8080/auth/logout",
+          "https://sea-lion-app-3l29g.ondigitalocean.app/auth/logout",
           {},
           {
             headers: {

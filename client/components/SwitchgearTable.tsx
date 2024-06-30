@@ -38,7 +38,7 @@ const SwitchgearTable = () => {
   const fetchSwitchgearData = async (page = 1) => {
     try {
       const response = await axios.get(
-        `http://localhost:8080/api/switchgear-info?page=${page}&per_page=25`
+        `https://sea-lion-app-3l29g.ondigitalocean.app/api/switchgear-info?page=${page}&per_page=25`
       );
       const data = response.data.data;
       setSwitchgearData(data);
@@ -121,7 +121,7 @@ const SwitchgearTable = () => {
     }
   
     try {
-      const response = await fetch(`http://localhost:8080/api/switchgear/${id}`, {
+      const response = await fetch(`https://sea-lion-app-3l29g.ondigitalocean.app/api/switchgear/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -166,7 +166,7 @@ const SwitchgearTable = () => {
   
     try {
       const response = await axios.put(
-        `http://localhost:8080/api/switchgear/${id}`,
+        `https://sea-lion-app-3l29g.ondigitalocean.app/api/switchgear/${id}`,
         { ...updatedData, reason },  // Send the reason along with updated data
         {
           headers: {
@@ -209,7 +209,7 @@ const SwitchgearTable = () => {
 
   const handleCreate = async (formData) => {
     try {
-      const response = await fetch("http://localhost:8080/api/switchgear", {
+      const response = await fetch("https://sea-lion-app-3l29g.ondigitalocean.app/api/switchgear", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

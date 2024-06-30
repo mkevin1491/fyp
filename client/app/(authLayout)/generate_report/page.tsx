@@ -50,7 +50,7 @@ const GenerateReport = () => {
   const fetchData = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:8080/api/defect-analytics",
+        "https://sea-lion-app-3l29g.ondigitalocean.app/api/defect-analytics",
         {
           params: {
             "defect_descriptions[]": defectDescriptions,

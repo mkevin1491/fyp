@@ -16,7 +16,7 @@ const RegisterPage = () => {
 
         try {
             console.log("Sending registration request with data:", { email, password, name });
-            const response = await axios.post('http://localhost:8080/auth/register', {
+            const response = await axios.post('https://sea-lion-app-3l29g.ondigitalocean.app/auth/register', {
                 email,
                 password,
                 name,
