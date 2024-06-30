@@ -12,6 +12,7 @@ import {
   Table2,
   TrendingUp,
   Captions,
+  BookMinus,
 } from "lucide-react";
 import { io } from "socket.io-client";
 import {
@@ -21,12 +22,16 @@ import {
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import axios from 'axios';
+import { useRouter } from 'next/navigation'; // Assuming you're using the next/navigation package
 
 export default function SideNavbar() {
+
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [pendingApprovalCount, setPendingApprovalCount] = useState<number>(0);
   const [controller, dispatch] = useMaterialTailwindController();
   const [mounted, setMounted] = useState(false);
+  const router = useRouter(); // Initialize useRouter for navigation
 
   useEffect(() => {
     setMounted(true);
@@ -83,6 +88,27 @@ export default function SideNavbar() {
     return null;
   }
 
+  const handleLogout = async () => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        await axios.post(
+          "http://localhost:8080/auth/logout",
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        localStorage.removeItem("token");
+        router.push("/login");
+      } catch (error) {
+        console.error("Error logging out:", error);
+      }
+    }
+  };
+
   return (
     <aside
       className={`${
@@ -90,7 +116,13 @@ export default function SideNavbar() {
       } fixed inset-y-0 left-0 z-50 my-4 ml-4 h-[calc(100vh-32px)] w-72 bg-white shadow-md rounded-xl transition-transform duration-300 md:translate-x-0`}
     >
       <div className="relative flex flex-col h-full">
+        
         <div className="flex justify-between items-center py-6 px-8">
+        <img
+          className="mx-auto h-5 w-auto my-6"
+          src="/tnb-logo.png"
+          alt="TNB Logo"
+        />
           <span className="text-xl font-bold">TNB-SWITCHWISE</span>
         </div>
         <Nav
@@ -173,8 +205,23 @@ export default function SideNavbar() {
               icon: Captions,
               variant: "ghost",
             },
+            {
+              title: "About System",
+              href: "/aboutsystem",
+              icon: BookMinus,
+              variant: "ghost",
+            },
           ]}
         />
+        {/* Logout Button */}
+        <div className="flex items-center justify-center mt-auto py-4">
+          <button onClick={handleLogout} className="text-gray-500 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-500">
+            <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            Logout
+          </button>
+        </div>
       </div>
     </aside>
   );

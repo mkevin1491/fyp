@@ -101,27 +101,6 @@ const DashboardPage = () => {
     fetchFunctionalLocations();
   }, [router]);
 
-  const handleLogout = async () => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        await axios.post(
-          "http://localhost:8080/auth/logout",
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        localStorage.removeItem("token");
-        router.push("/login");
-      } catch (error) {
-        console.error("Error logging out:", error);
-      }
-    }
-  };
-
   if (!user) {
     return null;
   }
@@ -134,11 +113,8 @@ const DashboardPage = () => {
     <div className="mt-12">
       <div className="mb-8 flex items-center justify-between">
         <Typography variant="h5" className="mb-4, pl-1">
-          Welcome, {user.name}
+          Welcome, {user.name}! Here is an overviweof switchgear in operation.
         </Typography>
-        <Button onClick={handleLogout} variant="gradient" color="blue">
-          Logout
-        </Button>
       </div>
 
       <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">

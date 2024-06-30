@@ -161,7 +161,6 @@ def upload_file():
         logger.error(f"Error during file upload: {e}")
         return jsonify({'error': str(e)}), 500
 
-
 @app.route("/api/pending-approvals", methods=['GET'])
 def get_pending_approvals():
     try:
@@ -313,16 +312,19 @@ def get_approval_logs():
 @jwt_required()
 def get_action_logs():
     try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
         action = request.args.get('action')
+        
         query = ActionLog.query
         
         if action:
             query = query.filter_by(action=action)
         
-        logs = query.order_by(ActionLog.timestamp.desc()).all()
+        logs_paginated = query.order_by(ActionLog.timestamp.desc()).paginate(page=page, per_page=per_page, error_out=False)
         
         logs_data = []
-        for log in logs:
+        for log in logs_paginated.items:
             log_data = {
                 'id': log.id,
                 'action': log.action,
@@ -330,15 +332,17 @@ def get_action_logs():
                 'data': log.data,
                 'timestamp': log.timestamp,
                 'user_id': log.user_id,
-                'user': {
-                    'id': log.user.id,
-                    'username': log.user.name
-                }
+                'username': log.user.name
             }
             logs_data.append(log_data)
             logger.debug(f"Log data: {log_data}")
         
-        return jsonify(logs_data), 200
+        return jsonify({
+            'logs': logs_data,
+            'total_pages': logs_paginated.pages,
+            'current_page': logs_paginated.page,
+            'total_items': logs_paginated.total
+        }), 200
     except Exception as e:
         logger.error(f"Error fetching action logs: {e}")
         return jsonify({'error': str(e)}), 500
@@ -367,7 +371,7 @@ def get_switchgear_data():
         response_data = {}
 
         for record in switchgear_data:
-            month = record.created_at.strftime('%B') if record.created_at else record.updated_at.strftime('%B')
+            month = record.report_date.strftime('%B') if record.report_date else record.updated_at.strftime('%B')
             if month not in response_data:
                 response_data[month] = set()
             response_data[month].add(record.functional_location)

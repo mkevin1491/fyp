@@ -297,6 +297,7 @@ const SwitchgearTable = () => {
                   "Functional Location",
                   "Report Date",
                   "Defect From",
+                  "Status",
                   "TEV/US In DB",
                   "Hotspot ∆T In ⁰C",
                   "Switchgear Type",
@@ -305,7 +306,6 @@ const SwitchgearTable = () => {
                   "Defect Description 1",
                   "Defect Description 2",
                   "Defect Owner",
-                  "Status",
                   "Action",
                 ].map((el) => (
                   <th
@@ -329,20 +329,6 @@ const SwitchgearTable = () => {
                   <td className="py-3 px-5">{formatDate(item.report_date)}</td>
                   <td className="py-3 px-5">{item.defect_from}</td>
                   <td className="py-3 px-5">
-                    {item.tev_us_in_db !== null ? item.tev_us_in_db : "N/A"}
-                  </td>
-                  <td className="py-3 px-5">
-                    {item.hotspot_delta_t_in_c !== null
-                      ? item.hotspot_delta_t_in_c
-                      : "N/A"}
-                  </td>
-                  <td className="py-3 px-5">{item.switchgear_type}</td>
-                  <td className="py-3 px-5">{item.switchgear_brand}</td>
-                  <td className="py-3 px-5">{item.substation_name}</td>
-                  <td className="py-3 px-5">{item.defect_description_1}</td>
-                  <td className="py-3 px-5">{item.defect_description_2}</td>
-                  <td className="py-3 px-5">{item.defect_owner}</td>
-                  <td className="py-3 px-5">
                     {item.status === "Critical" ? (
                       <span className="inline-flex items-center rounded-md bg-red-100 px-2 py-0.5 text-sm font-medium text-red-800 dark:bg-red-900 dark:text-red-300">
                         Critical
@@ -361,6 +347,21 @@ const SwitchgearTable = () => {
                       </span>
                     )}
                   </td>
+                  <td className="py-3 px-5">
+                    {item.tev_us_in_db !== null ? item.tev_us_in_db : "N/A"}
+                  </td>
+                  <td className="py-3 px-5">
+                    {item.hotspot_delta_t_in_c !== null
+                      ? item.hotspot_delta_t_in_c
+                      : "N/A"}
+                  </td>
+                  <td className="py-3 px-5">{item.switchgear_type}</td>
+                  <td className="py-3 px-5">{item.switchgear_brand}</td>
+                  <td className="py-3 px-5">{item.substation_name}</td>
+                  <td className="py-3 px-5">{item.defect_description_1}</td>
+                  <td className="py-3 px-5">{item.defect_description_2}</td>
+                  <td className="py-3 px-5">{item.defect_owner}</td>
+
 
                   <td className="py-3 px-5">
                     <Menu placement="left-start">
