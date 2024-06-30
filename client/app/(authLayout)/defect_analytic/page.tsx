@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardBody,
   Typography,
-  Button,
 } from "@material-tailwind/react";
 import MixedBarComposedChart from "@/components/MixedBarComposedChart";
 import withAuth from "@/components/withAuth";
@@ -98,7 +97,7 @@ const DefectAnalytics: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [defectDescriptions, year, selectedStates]);
 
   const availableYears = Array.from(
     { length: 4 },
@@ -113,10 +112,6 @@ const DefectAnalytics: React.FC = () => {
         return [...prevSelectedStates, state];
       }
     });
-  };
-
-  const handleFilterButtonClick = () => {
-    fetchData();
   };
 
   return (
@@ -141,7 +136,6 @@ const DefectAnalytics: React.FC = () => {
                 handleStateChange={handleStateChange}
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
-                handleFilterButtonClick={handleFilterButtonClick}
               />
             </div>
           </div>

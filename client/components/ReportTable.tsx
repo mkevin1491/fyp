@@ -218,12 +218,12 @@ const SwitchgearTable = () => {
         <Typography variant="h6" color="blue-gray" className="mb-1">
           Switchgear Table
         </Typography>
-        <button
+        {/* <button
           onClick={() => setCreateModalOpen(true)}
           className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded mb-4"
         >
           Create New
-        </button>
+        </button> */}
         <input
           type="text"
           placeholder="Search..."

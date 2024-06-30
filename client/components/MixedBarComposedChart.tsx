@@ -355,8 +355,14 @@ const MixedBarComposedChart: React.FC<MixedBarComposedChartProps> = ({
           </Button>
         </div>
       </div>
-      <ResponsiveContainer width="100%" height={400}>
-        <ComposedChart data={data}>
+      <ResponsiveContainer width="100%" height={500}>
+        <ComposedChart data={data} 
+                  margin={{
+                    top: 30, // Increased margin top to provide more space
+                    right: 30,
+                    left: 20,
+                    bottom: 5,
+                  }} >
           <CartesianGrid stroke="#f5f5f5" />
           <XAxis dataKey="month" />
           <YAxis />

@@ -15,18 +15,19 @@ import {
   BookMinus,
 } from "lucide-react";
 import { io } from "socket.io-client";
+import { useMaterialTailwindController, setOpenSidenav } from "./context";
 import {
-  useMaterialTailwindController,
-  setOpenSidenav,
-} from "./context";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import axios from 'axios';
-import { useRouter } from 'next/navigation'; // Assuming you're using the next/navigation package
+import axios from "axios";
+import { useRouter } from "next/navigation"; // Assuming you're using the next/navigation package
 
 export default function SideNavbar() {
-
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [pendingApprovalCount, setPendingApprovalCount] = useState<number>(0);
   const [controller, dispatch] = useMaterialTailwindController();
@@ -55,7 +56,9 @@ export default function SideNavbar() {
 
   const fetchPendingApprovalCount = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8080/api/pending-approvals/count");
+      const response = await fetch(
+        "http://127.0.0.1:8080/api/pending-approvals/count"
+      );
       const data = await response.json();
       setPendingApprovalCount(data.count);
     } catch (error) {
@@ -116,15 +119,15 @@ export default function SideNavbar() {
       } fixed inset-y-0 left-0 z-50 my-4 ml-4 h-[calc(100vh-32px)] w-72 bg-white shadow-md rounded-xl transition-transform duration-300 md:translate-x-0`}
     >
       <div className="relative flex flex-col h-full">
-        
-        <div className="flex justify-between items-center py-6 px-8">
-        <img
-          className="mx-auto h-5 w-auto my-6"
-          src="/tnb-logo.png"
-          alt="TNB Logo"
-        />
+        <div className="flex justify-center items-center py-6 px-8">
+          <img
+            className="mx-auto h-6 w-auto my-6"
+            src="/tnb-logo.png"
+            alt="TNB Logo"
+          />
           <span className="text-xl font-bold">TNB-SWITCHWISE</span>
         </div>
+
         <Nav
           isCollapsed={isCollapsed}
           links={[
@@ -144,7 +147,16 @@ export default function SideNavbar() {
         />
         <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="defect_analytic">
-            <AccordionTrigger className={cn(buttonVariants({ variant: "ghost", size: "sm", className: "flex items-center w-full text-left px-8 py-2 justify-between" }))}>
+            <AccordionTrigger
+              className={cn(
+                buttonVariants({
+                  variant: "ghost",
+                  size: "sm",
+                  className:
+                    "flex items-center w-full text-left px-8 py-2 justify-between",
+                })
+              )}
+            >
               <div className="flex items-center">
                 <LineChart className="mr-2" />
                 <span>Defect Analytic</span>
@@ -191,7 +203,10 @@ export default function SideNavbar() {
               href: "/approval",
               icon: FileCog,
               variant: "ghost",
-              label: pendingApprovalCount > 0 ? pendingApprovalCount.toString() : undefined,
+              label:
+                pendingApprovalCount > 0
+                  ? pendingApprovalCount.toString()
+                  : undefined,
             },
             {
               title: "Approval Log",
@@ -215,9 +230,23 @@ export default function SideNavbar() {
         />
         {/* Logout Button */}
         <div className="flex items-center justify-center mt-auto py-4">
-          <button onClick={handleLogout} className="text-gray-500 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-500">
-            <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h14M12 5l7 7-7 7"/>
+          <button
+            onClick={handleLogout}
+            className="text-gray-500 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-500"
+          >
+            <svg
+              className="w-6 h-6 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M5 12h14M12 5l7 7-7 7"
+              />
             </svg>
             Logout
           </button>

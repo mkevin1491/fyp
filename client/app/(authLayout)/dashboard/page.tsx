@@ -113,7 +113,7 @@ const DashboardPage = () => {
     <div className="mt-12">
       <div className="mb-8 flex items-center justify-between">
         <Typography variant="h5" className="mb-4, pl-1">
-          Welcome, {user.name}! Here is an overviweof switchgear in operation.
+          Welcome, {user.name}! Here is an overview of switchgear in operation.
         </Typography>
       </div>
 
@@ -159,9 +159,9 @@ const DashboardPage = () => {
           </CardBody>
         </Card>
 
-        <Card className="border border-blue-gray-100 shadow-sm">
-          <CardBody>
-            <Typography variant="h6" className="mb-4">
+        <Card className="overflow-hidden border border-blue-gray-100 shadow-sm">
+          <CardBody >
+            <Typography variant="h6" color="blue-gray" className="mb-1">
               Switchgear Brand Status: {brandStatusText}
             </Typography>
             <PieChartComponent data={brandData} onFilterChange={handleFilterChange} brandStatusText={brandStatusText} />
