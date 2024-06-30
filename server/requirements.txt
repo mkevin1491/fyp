@@ -13,3 +13,4 @@ pandas==2.2.2
 numpy
 requests==2.32.2
 PyMySQL==1.1.0
+cryptography
